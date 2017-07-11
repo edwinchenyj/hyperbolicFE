@@ -1,0 +1,8 @@
+*.avi
+*.mat
+!theta_taylor.mat
+*.asv
+*.jpg
+*.fig
+*.ply
+*.obj
