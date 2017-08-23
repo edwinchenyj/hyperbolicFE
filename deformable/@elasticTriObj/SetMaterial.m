@@ -23,11 +23,27 @@ for t = 1:length(elem)
     obj.rho(elem(t)) = Rho;
     % simple mass lumping
     % probably not right...
-    for e = obj.elem(t,:)
-        for mi = (e-1)*2+1:e*2
-            obj.M(mi,mi) = obj.M(mi,mi)+obj.W(t)/3 * Rho;
-        end
-    end
+%     for e = obj.elem(t,:)
+%         for mi = (e-1)*2+1:e*2
+%             obj.M(mi,mi) = obj.M(mi,mi)+obj.W(t)/3 * Rho;
+%         end
+%     end
+    
+    % consistent mass from eq(31.27) in 
+    % http://kis.tu.kielce.pl/mo/COLORADO_FEM/colorado/IFEM.Ch31.pdf
+    
+        elems = obj.elem(t,:);
+        i_elems = [ 2*elem-1; 2*elem];
+        i_elems = i_elems(:);
+        obj.M(i_elems,i_elems) = obj.M(i_elems,i_elems) +...
+            Rho*obj.W(t)/12 *...
+            [2 0 1 0 1 0;
+            0 2 0 1 0 1;
+            1 0 2 0 1 0;
+            0 1 0 2 0 1;
+            1 0 1 0 2 0;
+            0 1 0 1 0 2];
+%     end
 end
 
 

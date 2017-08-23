@@ -1,0 +1,50 @@
+function rightangletriangle_barycentric_script
+% load mesh to analysis the eigenmodes
+close all
+clear all
+
+draw = false;
+rerun_flag = true;
+% type_list = {'ellipse'}
+% type_list = {'rectangleCircularHole'};
+% type_list = {'rect'};
+
+% max area list
+
+maxA_list = [1 0.1 0.05 0.01]';
+
+interpolation_step_list = [0.3];
+
+fs = filesep;
+mass_flag = true;
+
+type = 'rightangletriangle';
+
+axis_box = [-1 2 -1 2];
+% options = optimoptions('fsolve','Algorithm','levenberg-marquardt');
+options = optimoptions('fsolve','TolFun',1.e-9,'TolX',1.e-9,'Display','final');
+
+energy_table = zeros(length(maxA_list),length(interpolation_step_list));
+
+
+
+for i = 1:length(maxA_list)
+    maxA = maxA_list(i);
+    %         meshname = sprintf('simData%ctrimeshes%c%s maxA%.e',fs,fs,type, maxA);
+    
+    meshname = sprintf('simData%ctrimeshes%c%s maxA%.e tritool%s',fs,fs,type, maxA);
+    if exist([meshname '.mat'], 'file') ~= 2
+        disp('mesh does not exist')
+        break
+    else
+        load([meshname '.mat'], 'nodeM', 'elem');
+        
+    end
+    
+    elem(:,[1 3]) = elem(:,[3 1]);
+    
+    N = size(nodeM,1);
+    
+    filename = sprintf('simData%ctrimeshes%cmatlabData%c%s maxA%.e mass%d Y%.e P%.e rho%.e', fs, fs, fs, type, maxA, mass_flag, Y, P, rho);
+    
+end

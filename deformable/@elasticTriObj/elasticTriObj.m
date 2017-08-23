@@ -19,6 +19,23 @@ classdef elasticTriObj < handle
         I4 = eye(4);
         % commutation matrix
         K44 = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1];
+        
+        
+        IndK = [[1:2, [1:2] + 6]; ...
+            [1:2, [1:2] + 6] + 12; ...
+            [1:2, [1:2] + 6] + 24; ...
+            [1:2, [1:2] + 6] + 36; ...
+            ...
+            [1:2, [1:2] + 6] + 2; ...
+            [1:2, [1:2] + 6] + 12 + 2; ...
+            [1:2, [1:2] + 6] + 24 + 2; ...
+            [1:2, [1:2] + 6] + 36 + 2; ...
+            ...
+            [1:2, [1:2] + 6] + 4; ...
+            [1:2, [1:2] + 6] + 12 + 4; ...
+            [1:2, [1:2] + 6] + 24 + 4; ...
+            [1:2, [1:2] + 6] + 36 + 4; ...
+            ]; % fast indexing for the stiffness matrix (for optimizating the speed)
     end
     properties
         N; % #nodes
@@ -29,13 +46,14 @@ classdef elasticTriObj < handle
         elem; % element label (NT by 3): [N1 N2 N3]
         
         x; % position vector in world (2N by 1)
+        v; % velocity vector in world (2N by 1)
         X; % position vector in material, AKA rest pose (2N by 1)
         
         Ds; % some type of discrete gradient per element (2NT by 2) storing 2 edges of the elements in world
         Dm; % some type of discrete gradient per element (2NT by 2) storing 2 edges of the elements in material
         DmINV; % inverse of Dm (2NT by 2)
         W; % undeformed volume of each element (NT by 1)
-        T; % mapping vectorized nodal position in a tet to its vectorized deformation gradient (4NT by 6)
+        T; % mapping vectorized nodal position in a tri to its vectorized deformation gradient (4NT by 6)
         % definition: vec(F) = T * vec(x), or vec(dF) = T * vec(dx)
         M % mass matrix
         K0;
@@ -46,10 +64,10 @@ classdef elasticTriObj < handle
         F; % deformation gradient (2NT by 2) from F*Dm = Ds = xG and F = xG(Dm)^(-1)
         FINV % inverse of F (2NT by 2)
         
-        U; % left singular vectors for each tet
-        V; % right singular vectors for each tet
-        S; % principle stretches for each tet (singular values)
-        R; % rotation for each tet
+        U; % left singular vectors for each tri
+        V; % right singular vectors for each tri
+        S; % principle stretches for each tri (singular values)
+        R; % rotation for each tri
         
         % TODO: may want to add J = det(F), or I1, I2, and I3, the
         % invariances if the deformation gradient tensor
@@ -58,6 +76,8 @@ classdef elasticTriObj < handle
         
         f; % elastic force under the current deformation
         
+        
+        isCorotatedLinear = false;
         materialBlock = {}; % A cell array of indice to the elements of the same material type
         materialType = {}; % A cell array of type of material of each block
         materialBlockCount = 0; % number of different blocks of material
@@ -76,7 +96,7 @@ classdef elasticTriObj < handle
     methods
         function obj = elasticTriObj(varargin)
             % Constructor 
-            %   Take in an undeformed tet mesh with
+            %   Take in an undeformed tri mesh with
             %       nodeM: (undeformed) nodal position in material (#nodes
             %       by 3)
             %       elem: element label (#element by 3) [N1 N2 N3]

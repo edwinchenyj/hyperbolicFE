@@ -103,8 +103,6 @@ classdef elasticTetObj < handle
         Y;
         Rho;
         
-        finalized = false; % A flag to check if the object is ready for simulation
-        
 
     end
     
