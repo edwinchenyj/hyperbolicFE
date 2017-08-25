@@ -21,6 +21,10 @@ for t = 1:length(elem)
     obj.mu(elem(t)) = Y ./ ( 2 * (1 + P) );
     obj.lambda(elem(t)) = ( Y .* P ) ./ ( (1 + P) .* (1 - 2 * P) );
     obj.rho(elem(t)) = Rho;
+    obj.Y = Y;
+    obj.P = P;
+    obj.Rho = Rho;
+    obj.material_type = type;
     % simple mass lumping
     % probably not right...
 %     for e = obj.elem(t,:)
@@ -31,9 +35,8 @@ for t = 1:length(elem)
     
     % consistent mass from eq(31.27) in 
     % http://kis.tu.kielce.pl/mo/COLORADO_FEM/colorado/IFEM.Ch31.pdf
-    
-        elems = obj.elem(t,:);
-        i_elems = [ 2*elem-1; 2*elem];
+        local_elem = obj.elem(elem(t),:);
+        i_elems = [ 2*local_elem-1; 2*local_elem];
         i_elems = i_elems(:);
         obj.M(i_elems,i_elems) = obj.M(i_elems,i_elems) +...
             Rho*obj.W(t)/12 *...

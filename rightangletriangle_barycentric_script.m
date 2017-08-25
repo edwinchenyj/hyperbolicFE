@@ -54,6 +54,7 @@ for i = 1:length(maxA_list)
     
     TR = triangulation(T,nodeM(Xind_fix,1),nodeM(Xind_fix,2));
     Bary = cartesianToBarycentric(TR,ones(N,1),nodeM);
-    
-    save([filename '.mat'], 'Bary');
+    sub_elem_connectivity = elem;
+    num_sub_points = N;
+    save([filename '.mat'], 'Bary','sub_elem_connectivity','num_sub_points','ind_fix','ind_apex','ind_apex2','ind_apex3');
 end

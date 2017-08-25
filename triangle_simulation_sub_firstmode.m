@@ -1,4 +1,4 @@
-function triangle_simulation
+function triangle_simulation_sub_firstmode
 
 clear all
 close all
@@ -48,15 +48,21 @@ a = 0.0; % rayleigh damping
 b = 0.0;
 
 filename = sprintf('simData%c%s maxA%.e', fs, type, maxA);
-filename = [filename '_linear_longtime'];
+filename = [filename '_linear_sub'];
 if (exist([filename '.mat'], 'file') ~= 2) || rerun_flag
     
     % construct triangular mesh object
     obj = elasticTriObj(nodeM, elem);
     
     
-    obj.SetMaterial( Y, P, rho, 1:size(elem,1), 2); % set the tri to linear
+    obj.SetMaterial( Y, P, rho, 1:size(elem,1), 2); % set the tri to neohookean
     
+    obj.initGhostPoints;
+%     ha = obj.init_vis;
+%     obj.simple_vis(ha);
+%     
+%     obj.simple_vis_sub(ha);
+%     obj.subElasticForce;
     M = obj.M;
     % print out the total mass for sanity check
     % should be the same for all mesh resolution
@@ -81,8 +87,8 @@ if (exist([filename '.mat'], 'file') ~= 2) || rerun_flag
     [low_eig, permutation_indices] = sort(diag(D));
     %     low_eig2 = sort(diag(d2));
     %     eig_list(ind_N) = low_eig(1);
-    V = -V(:,permutation_indices);
-    firstMode = V(:,4)/2;
+    V = V(:,permutation_indices);
+    firstMode = -V(:,4)/2;
     
     save([filename '.mat'], 'obj','firstMode');
 else
@@ -128,12 +134,72 @@ draw_rate = round(sim_rate/vid.FrameRate);
 trajectory = zeros(size(u,1),tsteps);
 for ti = 1:tsteps
     trajectory(:,ti) = u;
+    
+%     % k1
+%         positions(indLogical) = positionsM(indLogical) + u(1:end/2);
+%         v(indLogical) = u(end/2 + 1 : end);
+%         
+%         obj.SetCurrentState(positions - positionsM);
+% 
+%         Eforce = obj.subElasticForce;
+%         Eforce = Eforce(indLogical);
+%         Mass = obj.M;
+%         Mass = Mass(indLogical,indLogical);
+% %         fExternal = Mass * externalGravity;
+%         
+%         f1 = Eforce;
+%         
+%         k1 = dt * [v(indLogical); Mass\f1];
+%         
+%         % k2
+%         positions(indLogical) = positionsM(indLogical) + u(1:end/2) + k1(1:end/2)/2;
+%         v(indLogical) = u(end/2 + 1 : end) + k1(end/2+1 : end)/2;
+%         
+%         obj.SetCurrentState(positions - positionsM);
+%         Eforce = obj.subElasticForce;
+%         Eforce = Eforce(indLogical);
+%         
+%         f2 = Eforce;
+%         
+%         k2 = dt * [v(indLogical); Mass\f2];
+%         
+%         % k3
+%         positions(indLogical) = positionsM(indLogical) + u(1:end/2) + k2(1:end/2)/2;
+%         v(indLogical) = u(end/2 + 1 : end) + k2(end/2+1 : end)/2;
+%         
+%         obj.SetCurrentState(positions - positionsM);
+%         Eforce = obj.subElasticForce;
+%         Eforce = Eforce(indLogical);
+%         
+%         f3 = Eforce;
+%         
+%         k3 = dt * [v(indLogical); Mass\f3];
+%         
+%         % k4
+%         positions(indLogical) = positionsM(indLogical) + u(1:end/2) + k3(1:end/2);
+%         v(indLogical) = u(end/2 + 1 : end) + k3(end/2+1 : end);
+%         
+%         obj.SetCurrentState(positions - positionsM);
+%         Eforce = obj.subElasticForce;
+%         Eforce = Eforce(indLogical);
+%         
+%         f4 = Eforce;
+%         
+%         
+%         k4 = dt * [v(indLogical); Mass\f4];
+%         
+%         % RK4
+%         %         positions(indLogical) = positionsM(indLogical) + u(1:end/2) + k1(1:end/2)/6 + k2(1:end/2)/3 + k3(1:end/2)/3 + k4(1:end/2)/6;
+%         %         v(indLogical) = u(end/2 + 1 : end) + k1(end/2 + 1 : end)/6 + k2(end/2 + 1 : end)/3 + k3(end/2 + 1 : end)/3 + k4(end/2 + 1 : end)/6;
+%         u(1:end/2) = u(1:end/2) + k1(1:end/2)/6 + k2(1:end/2)/3 + k3(1:end/2)/3 + k4(1:end/2)/6;
+%         u(end/2 + 1:end)= u(end/2 + 1 : end) + k1(end/2 + 1 : end)/6 + k2(end/2 + 1 : end)/3 + k3(end/2 + 1 : end)/3 + k4(end/2 + 1 : end)/6;
+%         
     u = IM(dt, u, obj);
     
     
     if(draw)
         if or(mod(ti, draw_rate) == 1, draw_rate == 1)
-
+        obj.SetCurrentState(Dx)
             node = u(1:end/2) + positionsM(indLogical);
             node = transpose(reshape(node,2,[]));
             trimesh(elem,node(:,1),node(:,2),zeros(size(node,1),1),zeros(size(node,1),1));
@@ -141,6 +207,17 @@ for ti = 1:tsteps
             axis(axis_box)
             axis equal
             drawnow
+%             hold on
+%             ef = obj.subElasticForce;
+%             ha = gca;
+%             xlim = ha.XLim;
+%             ylim = ha.YLim;
+%             ha.ALimMode = 'manual';
+%             
+%             quiver(node(:,1),node(:,2),ef(1:2:end),ef(2:2:end),0)
+%             ha.XLim = xlim;
+%             ha.YLim = ylim;
+%             hold off
             if save_state
                 frame = getframe;
                 writeVideo(vid,frame);
@@ -157,7 +234,7 @@ save(fname)
 
     function out = IM(dt, u, obj)
         it = 0;
-        MaxIT = 40;
+        MaxIT = 10;
         Dv = Inf;
         dq_free = u(1:end/2);
         v_free = u(end/2+1:end);
@@ -179,7 +256,7 @@ save(fname)
         %         B = -a * Mass - b * K0(indLogical,indLogical);
         B = -a * Mass - b * K_mid;
         
-        Eforce_mid = obj.ElasticForce;
+        Eforce_mid = obj.subElasticForce;
         Eforce_mid = Eforce_mid(indLogical);
         
         fExternal = Mass * externalGravity;
@@ -216,7 +293,7 @@ save(fname)
             %             B = -a * Mass - b * K0(indLogical,indLogical);
             B = -a * Mass - b * K_mid;
             
-            Eforce_mid = obj.ElasticForce;
+            Eforce_mid = obj.subElasticForce;
             Eforce_mid = Eforce_mid(indLogical);
             
             fExternal = Mass * externalGravity;

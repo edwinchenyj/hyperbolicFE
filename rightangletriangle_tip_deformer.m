@@ -111,8 +111,6 @@ for i = 1:length(maxA_list)
             Dx_final_slope = [((-1 -1) * ratio_slope + 1) - nodeM(Xind_slope,1), (0 - nodeM(Xind_slope,2))];
             Dx_final_slope = reshape(transpose(Dx_final_slope),[],1);
             
-            
-            
             Xind_boundary = (abs(nodeM(:,1)) < 1e-3) | (abs(nodeM(:,1)+nodeM(:,2) - 1 ) < 1e-3);
             ind_boundary = reshape(transpose(repmat(Xind_boundary,1,2)),[],1); % logical index for total position vector
             
@@ -122,8 +120,6 @@ for i = 1:length(maxA_list)
             ind_apex2 = reshape(transpose(repmat(Xind_apex2,1,2)),[],1); % logical index for total position vector
             Xind_apex3 = (nodeM(:,1) == min(nodeM(:,1))) & (nodeM(:,2) == min(nodeM(:,2)));
             ind_apex3 = reshape(transpose(repmat(Xind_apex3,1,2)),[],1); % logical index for total position vector
-            
-            
             
 %             Xind_fix = abs(nodeM(:,2)) < 1e-3;
 %             ind_fix = reshape(transpose(repmat(Xind_fix,1,2)),[],1); % logical index for total position vector

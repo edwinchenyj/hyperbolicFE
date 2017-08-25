@@ -10,7 +10,7 @@ type_list = {'triangle'};
 el_list = [0.2 0.1 0.05 0.02];
 % max area list
 % maxA_list = [0.2 0.05 0.03 0.02]'/50;
-maxA_list = [0.01/10]
+maxA_list = [0.1]
 % now each area for quality control in triangle corresponds to each edge length from distmesh
 
 

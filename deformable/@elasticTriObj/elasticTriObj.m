@@ -78,6 +78,7 @@ classdef elasticTriObj < handle
         
         
         isCorotatedLinear = false;
+        material_type;
         materialBlock = {}; % A cell array of indice to the elements of the same material type
         materialType = {}; % A cell array of type of material of each block
         materialBlockCount = 0; % number of different blocks of material
@@ -89,8 +90,20 @@ classdef elasticTriObj < handle
         
         % TODO: need to get rid of this
         Y;
+        P;
         Rho;
         
+        % for ghost sub-points
+        sub_objs;
+        
+        % handle to the axis for visualization
+        vis_handle;
+        
+        % indices for fixed points (for ghost points)
+        ind_fix;
+        ind_apex;
+        ind_apex2;
+        ind_apex3;
     end
     
     methods
@@ -177,6 +190,38 @@ classdef elasticTriObj < handle
         
         SetMaterial(obj, Y, P, Rho, elem, type)
         
+        
+        function ha = init_vis(obj)
+            ha = axes;
+            obj.vis_handle = ha;
+            hold(obj.vis_handle,'on');
+        end
+        
+        function simple_vis(obj,ax)
+            axes(ax);
+            triplot(obj.elem,obj.nodeM(:,1),obj.nodeM(:,2));
+            obj.vis_handle = ax;
+%             ha = ax;
+        end
+        function current_vis(obj,ax)
+            axes(ax);
+            triplot(obj.elem,obj.node(:,1),obj.node(:,2));
+            obj.vis_handle = ax;
+%             ha = ax;
+        end
+        
+        function simple_vis_sub(obj,ax)
+            for t = 1:obj.NT
+                local_elem = obj.sub_objs(t).elem;
+                local_nodeM = obj.sub_objs(t).nodeM;
+                
+                axes(ax);
+                triplot(local_elem,local_nodeM(:,1),local_nodeM(:,2));
+            end
+            
+        end
+        
+        
         function N = GetNNodes(obj)
             N = obj.N;
         end
@@ -191,13 +236,25 @@ classdef elasticTriObj < handle
             K = obj.K0;
         end
         
+        f = subElasticForce(obj)
+        
         f = ElasticForce(obj)
-
+        
+        function out = ElasticForceWFixDx(obj,dx_free)
+            Dx = obj.x - obj.X;
+            Dx(~obj.ind_fix) = dx_free;
+            obj.SetCurrentState(Dx);
+            force = obj.ElasticForce;
+            out = force(~obj.ind_fix);
+        end
+        
         df = ElasticForceDifferential(obj, dx)
         
         K = StiffnessMatrix(obj)
         
         energy = totalEnergy(obj)
+        
+        initGhostPoints(obj)
         
         function C = greenStrain(obj)
             for i = 1:obj.NT

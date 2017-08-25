@@ -54,7 +54,7 @@ for i = 1:length(maxA_list)
     if (exist([filename '.mat'], 'file') ~= 2) | rerun_flag
         
         % construct triangular mesh object
-        obj = staticTriMesh(nodeM, elem);
+        obj = elasticTriObj(nodeM, elem);
         
         
         obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neohookean
