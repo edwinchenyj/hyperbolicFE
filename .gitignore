@@ -7,3 +7,6 @@
 *.ply
 *.obj
 *.png
+simData/
+mediaData/
+resultData/
