@@ -10,4 +10,7 @@
 sim_data/
 media_data/
 result_data/
+ext/gptoolbox/
 *.m4v
+!mesh_data/triangle_maxA_1e-02.mat
+mesh_data/
