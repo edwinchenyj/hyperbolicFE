@@ -11,9 +11,9 @@ rerun_flag = true;
 
 % max area list
 
-maxA_list = [1 0.1 0.01]';
+maxA_list = [0.1 0.01]';
 
-interpolation_step_list = [0.1];
+interpolation_step_list = [0.3];
 
 fs = filesep;
 mass_flag = true;
@@ -37,12 +37,8 @@ for i = 1:length(maxA_list)
     else
         load([meshname '.mat'], 'nodeM', 'elem');
         
-        % reference shape
-        if maxA == 1
-            nodeM0 = nodeM;
-            elem0 = elem;
-        end
     end
+    
     
     elem(:,[1 3]) = elem(:,[3 1]);
     
@@ -99,8 +95,6 @@ for i = 1:length(maxA_list)
             ef = obj.ElasticForce;
             
             quiver(node(:,1),node(:,2),ef(1:2:end),ef(2:2:end),0)
-            trimesh(elem0, nodeM0(:,1),nodeM0(:,2));
-            
             hold off
             
             
@@ -123,7 +117,7 @@ for i = 1:length(maxA_list)
             
             Xind_apex = nodeM(:,2) == max(nodeM(:,2));
             ind_apex = reshape(transpose(repmat(Xind_apex,1,2)),[],1); % logical index for total position vector
-            Xind_apex2 = (abs(nodeM(:,1) - max(nodeM(:,1))) < 1e-6) & (abs(nodeM(:,2) - min(nodeM(:,2))) < 1e-6);
+            Xind_apex2 = (nodeM(:,1) == max(nodeM(:,1))) & (nodeM(:,2) == min(nodeM(:,2)));
             ind_apex2 = reshape(transpose(repmat(Xind_apex2,1,2)),[],1); % logical index for total position vector
             Xind_apex3 = (abs(nodeM(:,1) - min(nodeM(:,1))) < 1e-6) & (abs(nodeM(:,2) - min(nodeM(:,2))) < 1e-6);
             ind_apex3 = reshape(transpose(repmat(Xind_apex3,1,2)),[],1); % logical index for total position vector
@@ -164,17 +158,15 @@ for i = 1:length(maxA_list)
             ef = obj.ElasticForce;
             
             quiver(node(:,1),node(:,2),ef(1:2:end),ef(2:2:end),0)
-            
-            trimesh(elem0, nodeM0(:,1),nodeM0(:,2));
             hold off
         end
         
         axis(axis_box)
         drawnow
+        print([filename num2str(i_deform)],'-dpng');
         energy_table(i, i_deform) = obj.totalEnergy;
     end
     
-        print([filename],'-dpng');
 end
 
 array2table(energy_table, 'RowNames', matlab.lang.makeValidName(cellstr((num2str(maxA_list)))),...

@@ -1,14 +1,17 @@
 %% generate 2d tri mesh from distmesh
+% can be used as input mesh to triangle
+
 regenerate = false;
 
+fs = filesep;
 
 type_list = {'triangle' 'circle' 'rectangleCircularHole' 'rect','poly','square' 'ellipse'};
-type_list = {'triangle'};
+type_list = {'circle'};
 
 % edge length list
 el_list = [0.1 0.05 0.025 0.02 0.015];
 el_list = [0.2 0.1 0.05 0.02];
-el_list = [0.005]
+el_list = [0.1 0.05 0.025];
 
 % everything in a fixed bounding box
 boundingBox = [-0 -0; 1 1];
@@ -18,7 +21,9 @@ for i_type = 1:length(type_list)
     for i = 1:length(el_list)
         el = el_list(i);
         fprintf('%s\n',type);
-        meshname = sprintf('simData%ctrimeshes%c%s el%.e',fs,fs,type, el);
+        
+        meshname = sprintf('sim_data%ctri_meshes%c%s el%.e',fs,fs,type, el);
+%         meshname = sprintf('mesh_data%c%s_inv_edge_length_%.3d',fs,type, 1/el);
         
         if or(regenerate,exist([meshname '.mat'], 'file') ~= 2)
             rng('default'); % Always the same results
@@ -74,7 +79,7 @@ for i_type = 1:length(type_list)
         colormap jet
         s_alpha = sprintf('%f',el);
         % figure
-        trimesh(elem,nodeM);
+        triplot(elem,nodeM(:,1),nodeM(:,2));
         axis equal
         grid on
         % figure

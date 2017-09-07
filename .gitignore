@@ -7,6 +7,7 @@
 *.ply
 *.obj
 *.png
-simData/
-mediaData/
-resultData/
+sim_data/
+media_data/
+result_data/
+*.m4v

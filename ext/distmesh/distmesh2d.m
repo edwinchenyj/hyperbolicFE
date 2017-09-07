@@ -124,4 +124,4 @@ end
 
 % Clean up and plot final mesh
 [p,t]=fixmesh(p,t);
-simpplot(p,t)
+% simpplot(p,t)

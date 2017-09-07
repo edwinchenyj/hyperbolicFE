@@ -1,37 +1,30 @@
 %% control the qualities of 2d tri mesh from distmesh using triangle with gptoolbox
 % need to add external gptoolbox wrapper for triangle
-% using mesh out put from distmesh as input to triangle
+% can use mesh out put from distmesh as input
 regenerate = false;
 
 fs = filesep;
 
-% type_list = {'triangle' 'circle' 'rectangleCircularHole' 'rect','poly','square' 'ellipse'};
-type_list = {'triangle','circle','rect'};
+type_list = {'triangle' 'circle' 'rectangleCircularHole' 'rect','poly','square' 'ellipse'};
+type_list = {'triangle'};
 
-% edge length list (parameters for distmesh)
-% used to generate meshes from distmesh, which is then passed to
-% triangle
-el_list = [0.1 0.05];
+% edge length list (parameters from dismesh)
 
-
-% max area list (control parameter in triangle)
-maxA_list = [0.01 0.0005];
+el_list = [0.1 0.05 0.025];
+% max area list (corresponding control parameter in triangle)
+maxA_list = [0.1 0.001];
 % now each area for quality control in triangle corresponds to each edge length from distmesh
-% maxA is the actual knob to control the mesh
-
-
-% everything in a fixed bounding box
-boundingBox = [-0.1 -0.1; 1.1 1.1];
+% maxA is the knob to control the mesh
 
 for i_type = 1:length(type_list)
     type = type_list{i_type};
     
-    for i = 1:length(el_list)
+        for i = 1:length(el_list)
         el = el_list(i);
         fprintf('%s\n',type);
         
-        distmesh_meshname = sprintf('sim_data%ctri_meshes%c%s el%.e',fs,fs,type, el);
-        %         meshname = sprintf('mesh_data%c%s_inv_edge_length_%.3d',fs,type, 1/el);
+        dismesh_meshname = sprintf('sim_data%ctri_meshes%c%s el%.e',fs,fs,type, el);
+%         meshname = sprintf('mesh_data%c%s_inv_edge_length_%.3d',fs,type, 1/el);
         
         if or(regenerate,exist([distmesh_meshname '.mat'], 'file') ~= 2)
             rng('default'); % Always the same results
@@ -57,7 +50,7 @@ for i_type = 1:length(type_list)
             elseif strcmp(type,'rectangleCircularHole')
                 fd=@(p) ddiff(drectangle(p,0,1,0,1),dcircle(p,0.5,0.5,0.25));
                 fh=@(p) el+0.05*dcircle(p,0.5,0.5,0.25);
-                %                 fh=@(p) el;
+%                 fh=@(p) el;
                 [p,t]=distmesh2d(fd,fh,el,boundingBox,[0,0;0,1;1,0;1,1]);
             elseif strcmp(type,'ellipse')
                 fd=@(p) p(:,1).^2/2^2+p(:,2).^2/1^2-1;
@@ -84,6 +77,14 @@ for i_type = 1:length(type_list)
         else
             load([distmesh_meshname '.mat'], 'nodeM', 'elem');
         end
+%         colormap jet
+%         s_alpha = sprintf('%f',el);
+%         % figure
+%         triplot(elem,nodeM(:,1),nodeM(:,2));
+%         axis equal
+%         grid on
+        % figure
+        % simpplot(nodeM,elem)
         save([distmesh_meshname '.mat'],'nodeM','elem')
         
     end
@@ -92,18 +93,18 @@ for i_type = 1:length(type_list)
         el = el_list(i);
         maxA = maxA_list(i);
         fprintf('%s\n',type);
-        distmesh_meshname = sprintf('sim_data%ctri_meshes%c%s el%.e',fs,fs,type, el);
+        olmeshname = sprintf('sim_data%ctri_meshes%c%s el%.e',fs,fs,type, el);
         
         meshname = sprintf('mesh_data%c%s_maxA_%.d',fs,type, maxA);
         if or(regenerate,exist([meshname '.mat'], 'file') ~= 2)
             
-            load([distmesh_meshname '.mat'], 'nodeM', 'elem');
+            load([oldmeshname '.mat'], 'nodeM', 'elem');
             [TV,TF,TN] = triangle(nodeM, elem, 'MaxArea',maxA,'Quality',30);
             
             p = TV;
             t = TF;
             [p,t] = fixmesh(p,t);
-            
+            % fstats(p,t);
             
             nodeM = p;
             elem = t;
@@ -113,14 +114,16 @@ for i_type = 1:length(type_list)
         end
         colormap jet
         s_alpha = sprintf('%f',el);
-        
+        % figure
         triplot(elem,nodeM(:,1),nodeM(:,2));
         axis equal
         grid on
-
+        % figure
+        % simpplot(nodeM,elem)
+%         pause
         save([meshname '.mat'],'nodeM','elem')
         
-        print(meshname,'-dpng')
+            print(meshname,'-dpng')
     end
     
     

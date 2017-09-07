@@ -13,7 +13,7 @@ tsteps = 120*3;
 
 fs = filesep;
 
-mesh_shape = 'triangle';
+type = 'triangle';
 
 constraints = 1; % types of constraint
 % 1: free
@@ -30,7 +30,7 @@ axis_box = [-1 1.5 -0.5 1];
 
 maxA = 0.01;
 
-meshname = sprintf('mesh_data%c%s_maxA_%.d',fs,mesh_shape, maxA);
+meshname = sprintf('mesh_data%c%s_maxA_%.d',fs,type, maxA);
 
 if exist([meshname '.mat'], 'file') ~= 2
     disp('mesh does not exist')
@@ -50,16 +50,14 @@ elem(:,[1 3]) = elem(:,[3 1]);
 
 N = size(nodeM,1);
 
-filename = sprintf('sim_data%csimulation_%s_maxA', fs, mesh_shape);
+filename = sprintf('sim_data%csimulation_%s_maxA', fs, type);
 if (exist([filename '.mat'], 'file') ~= 2) || rerun_flag
     
     % construct triangular mesh object
     obj = elasticTriObj(nodeM, elem);
     
     
-%     obj.SetMaterial( Y, P, rho, 1:size(elem,1), 2); % set the tri to linear
-    obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
-
+    obj.SetMaterial( Y, P, rho, 1:size(elem,1), 2); % set the tri to linear
     %
     Dx = 0*rand(2*N,1); % displacement field. set zero for rest state
     obj.SetCurrentState(Dx);
@@ -79,7 +77,7 @@ else
 %     load([filename '.mat'], );
 end
 
-deformation_scale_factor = 4;
+deformation_scale_factor = 2;
 deformation_mode = V(:,3 + deformation_mode_number)/deformation_scale_factor;
 
 node = obj.node;
@@ -90,15 +88,15 @@ externalGravity  = zeros(size(positions));
 nFixed = 0;
 indLogical = true(size(positions));
 
-% files = dir(sprintf('sim_data%csimulation*.mat',fs));
-% for i_file = 1:length(files)
-%     loaded_struct_array = load(files(i_file).name);
-%     fields = fieldnames(loaded_struct_array);
-%     for i_fields = 1:numel(fields)
-%         % don't check the iterators (begin with 'i')
-%         if fields{i_fields}(1) ~= 'i'
-%             eval(fields{i_fields} ==
-% end
+files = dir(sprintf('sim_data%csimulation*.mat',fs));
+for i_file = 1:length(files)
+    loaded_struct_array = load(files(i_file).name);
+    fields = fieldnames(loaded_struct_array);
+    for i_fields = 1:numel(fields)
+        % don't check the iterators (begin with 'i')
+        if fields{i_fields}(1) ~= 'i'
+            eval(fields{i_fields} ==
+end
 
 
 Dx = deformation_mode;
