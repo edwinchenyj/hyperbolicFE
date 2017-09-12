@@ -24,7 +24,7 @@ Y = 10; % Young's modululs
 P = 0.48; % Poisson ratio
 rho = 1; % density
 a = 0.0; % rayleigh damping
-b = 0.0;
+b = 1.00;
 
 axis_box = [-1 1.5 -0.5 1];
 
@@ -57,8 +57,8 @@ if (exist([filename '.mat'], 'file') ~= 2) || rerun_flag
     obj = elasticTriObj(nodeM, elem);
     
     
-%     obj.SetMaterial( Y, P, rho, 1:size(elem,1), 2); % set the tri to linear
-    obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
+    obj.SetMaterial( Y, P, rho, 1:size(elem,1), 2); % set the tri to linear
+%     obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
 
     %
     Dx = 0*rand(2*N,1); % displacement field. set zero for rest state
@@ -73,12 +73,13 @@ if (exist([filename '.mat'], 'file') ~= 2) || rerun_flag
     V = -V(:,permutation_indices);
 %     firstMode = V(:,4)/2;
     
-%     save([filename '.mat'], 'obj','V','D');
+    save([filename '.mat'], 'obj','V','D');
 else
     load([filename '.mat']);
 %     load([filename '.mat'], );
 end
 
+% deformation for the initial condition
 deformation_scale_factor = 4;
 deformation_mode = V(:,3 + deformation_mode_number)/deformation_scale_factor;
 
