@@ -57,7 +57,7 @@ classdef elasticDGTriObj < handle
         T; % mapping vectorized nodal position in a tri to its vectorized deformation gradient (4NT by 6)
         % definition: vec(F) = T * vec(x), or vec(dF) = T * vec(dx)
         M % mass matrix
-        K0;
+        K0 =[];
         CGTri; % CG triangulation
         
         DGN; % #DG nodes (3NT)
@@ -66,7 +66,7 @@ classdef elasticDGTriObj < handle
         DGelem; % DG elem list;
         DGM; % DG mass matrix
         DGK; % DG stiffnes matrix
-        
+        DGK0 = [];
         MapDGnode; % map from mesh nodal indices to indices in DGnode
         DGTri; % DG triangulation
         

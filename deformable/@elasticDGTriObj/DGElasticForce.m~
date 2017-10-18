@@ -1,14 +1,14 @@
-function f_k = ElasticForce(obj)
+function DGf_k = DGElasticForce(obj)
 % compute the elastic force under the current deformation (3N by 1)
 % can be calculated with current state as the sole input...
 
-f_k = zeros(2*obj.N,1);
-switch obj.elemMaterialType(1) % TODO: change the material type initialization
+DGf_k = zeros(2*obj.DGN,1);
+
+switch elemMaterialType(1)
     case 1
-        
         for t = 1:obj.NT
             
-            f_k_new = zeros(2*obj.N,1);
+            DGf_k_new = zeros(2*obj.DGN,1);
             
             type = obj.elemMaterialType(t);
             tF = obj.F(2*(t-1)+1:2*t,:);
@@ -33,16 +33,18 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
             end
             
             H = -obj.W(t) * P * (obj.DmINV(2*(t-1)+1:2*t,:)');
-            i = obj.elem(t, 1); j = obj.elem(t, 2); k = obj.elem(t, 3);
+            i = obj.DGelem(t, 1); j = obj.DGelem(t, 2); k = obj.DGelem(t, 3);
             
-            f_k_new(2*(i-1)+1:2*i) = f_k_new(2*(i-1)+1:2*i)+H(:,1);
-            f_k_new(2*(j-1)+1:2*j) = f_k_new(2*(j-1)+1:2*j)+H(:,2);
-            f_k_new(2*(k-1)+1:2*k) = f_k_new(2*(k-1)+1:2*k) - H(:,1) - H(:,2);
-            f_k = f_k + f_k_new;
+            DGf_k_new(2*(i-1)+1:2*i) = DGf_k_new(2*(i-1)+1:2*i)+H(:,1);
+            DGf_k_new(2*(j-1)+1:2*j) = DGf_k_new(2*(j-1)+1:2*j)+H(:,2);
+            DGf_k_new(2*(k-1)+1:2*k) = DGf_k_new(2*(k-1)+1:2*k) - H(:,1) - H(:,2);
+            DGf_k = DGf_k + DGf_k_new;
         end
+        
+        DGf_k = DGf_k + obj.DGInterfaceElasticForce;
+        
     case 2
-        if isempty(obj.K0)
-            
+        if isempty(obj.DGK0)
             for t = 1:obj.NT
                 
                 mu = obj.mu(t);
@@ -91,9 +93,12 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
             end
             
             % global stiffness matrix
-            obj.K0 = sparse(obj.ii, obj.jj, sA, 2*obj.N, 2*obj.N);
+            DGK_k = sparse(obj.DGElement_ii, obj.DGElement_jj, sA, 2*obj.DGN, 2*obj.DGN);
             
+            % DGK_interface = sparse(size(obj.DGX,1),size(obj.DGX,1));
+            % traverse the interface
+            obj.DGK0 = DGK_k + obj.DGInterfaceStiffnessMatrix;
         end
-        f_k = -obj.K0 * (obj.x - obj.X);
-end
+        DGf_k = -obj.DGK0 * obj.DGDx;
+        
 end
