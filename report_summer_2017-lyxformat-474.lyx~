@@ -1,0 +1,670 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Summer report
+\end_layout
+
+\begin_layout Standard
+The goal of this summer project is investigating how to simulate soft elastic
+ object effectively on coarse mesh.
+ We will break this investigation into 2 parts in this report
+\end_layout
+
+\begin_layout Enumerate
+How to quickly fit the material property of an object to a FEM simulation
+ through dynamics using DAC (
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Chen:2017:DNC:3072959.3073669"
+
+\end_inset
+
+ Section 3).
+\end_layout
+
+\begin_layout Enumerate
+Investigate FEM locking/numerical stiffening on coarse mesh.
+ In particular, I looked at the cause and how it affects the simulation
+ in static and dynamic.
+\end_layout
+
+\begin_layout Section
+Fitting Young's modulus using DAC
+\end_layout
+
+\begin_layout Standard
+The material properties of elastic objects specified by the manufacturer
+ are often inaccurate (due to variation in fabrication process, I assume),
+ and calibration is needed for each object.
+ Fitting material properties through tracking is not an easy task.
+ but DAC is a simple algorithm and work surprisingly well in the cases considere
+d in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Chen:2017:DNC:3072959.3073669"
+
+\end_inset
+
+.
+ DAC consists of the following steps:
+\end_layout
+
+\begin_layout Enumerate
+Track the oscillation of a simple deformation mode of the object
+\begin_inset CommandInset label
+LatexCommand label
+name "enu:Track-the-oscillation"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Solve the harmonic inverse problem 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "doi:10.1063/1.475324"
+
+\end_inset
+
+ from the trajectory in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "enu:Track-the-oscillation"
+
+\end_inset
+
+.
+ and extract the dominating frequency (frequency with largest amplitude),
+ 
+\begin_inset Formula $\omega_{l}$
+\end_inset
+
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "enu:Solve-the-harmonic"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Create a mesh for the FEM simulation, with initial Young's modulus 
+\begin_inset Formula $Y_{0}=1Pa$
+\end_inset
+
+.
+ Other material parameters (Poisson ratio, density, etc) are not fitted
+ here, so will be set to some physical values and stay unchanged after DAC.
+ For example Poisson ratio can be set to 
+\begin_inset Formula $P=0.48,$
+\end_inset
+
+ and the density 
+\begin_inset Formula $\rho$
+\end_inset
+
+ is set to the value specified by the manufacturer.
+ Also the material model can is arbitrary (linear, Neo-hookean etc)
+\begin_inset CommandInset label
+LatexCommand label
+name "enu:Create-a-mesh"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Find the lowest the eigenvalue problem
+\begin_inset CommandInset label
+LatexCommand label
+name "enu:Find-the-lowest"
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+Kx=\lambda_{l}Mx,
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $K$
+\end_inset
+
+ and 
+\begin_inset Formula $M$
+\end_inset
+
+ are the stiffness matrix and mass matrix from the FEM simulation
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+If the model chosen in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "enu:Create-a-mesh"
+
+\end_inset
+
+.
+ is nonlinear, 
+\begin_inset Formula $K$
+\end_inset
+
+ must be chosen at a equilibrium state to ensure positive definiteness.
+\end_layout
+
+\end_inset
+
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "enu:Create-a-mesh"
+
+\end_inset
+
+., with the same boundary conditions from the simple deformation in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "enu:Track-the-oscillation"
+
+\end_inset
+
+..
+ 
+\end_layout
+
+\begin_layout Enumerate
+Rescale the Young's modulus by 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "enu:Solve-the-harmonic"
+
+\end_inset
+
+.
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "enu:Find-the-lowest"
+
+\end_inset
+
+.
+\begin_inset CommandInset label
+LatexCommand label
+name "enu:Rescale-the-Young's"
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+Y=Y_{0}\frac{\omega_{l}^{2}}{\lambda_{l}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This fitting is based on the fact that the eigenvalues of the system scale
+ linearly with Young's modulus.
+ After DAC, the Young's modulus can be used for simulating the same object
+ 
+\emph on
+with the same mesh
+\emph default
+.
+ The next section of this writeup investigate the mesh-dependent stiffness,
+ which prevent us from using DAC on the same object with different mesh
+ resolutions.
+\end_layout
+
+\begin_layout Section
+Mesh-dependent stiffness
+\end_layout
+
+\begin_layout Standard
+Following the fact that Young's modulus scales linearly with the eigenvalue,
+ we observed that different mesh resolution of same object would have different
+ eigenvalues
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+As mesh gets finer and finer, the number of eigenvalue increases, and the
+ new eigenvalues corresponds to the high oscillatory modes which damp out
+ quickly.
+ Here we are talking about lower eigenvalues, which correspond to the dominating
+ dynamic modes with larger amplitudes, and should ideally stay the same
+ across different mesh resolutions.
+\end_layout
+
+\end_inset
+
+, meaning the apparent stiffness of the object is different, and the modes
+ would oscillate at different frequencies.
+\end_layout
+
+\begin_layout Subsection
+A 2D Example
+\end_layout
+
+\begin_layout Standard
+First start from an polygon shape object (from Distmesh 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Persson:2004aa"
+
+\end_inset
+
+) with 2 level of refinements (See Fig 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Polygon-from-Distmesh"
+
+\end_inset
+
+, 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Coarse-mesh"
+
+\end_inset
+
+, 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Fine-mesh"
+
+\end_inset
+
+).
+ Solve the general eigenvalue problem with Neumann B.C.
+ for both mesh
+\begin_inset Formula 
+\[
+Kx=\lambda Mx
+\]
+
+\end_inset
+
+and eliminate the null space corresponding to the rigid motion, we plot
+ the lowest eigenmode in Fig 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Coarse-mesh-first"
+
+\end_inset
+
+ and Fig 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Fine-mesh-first"
+
+\end_inset
+
+.
+ These eigenmodes look similar on the object, but the eigenvalues are very
+ different, 
+\begin_inset Formula $\lambda=2.35$
+\end_inset
+
+ for the low resolution mesh, and 
+\begin_inset Formula $\lambda=1.99$
+\end_inset
+
+ for the high resolution mesh, meaning simulating on the low resolution
+ mesh would make the object look stiffer and oscillate faster.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename report_images/polygon.png
+	scale 20
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Polygon from Distmesh 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Persson:2004aa"
+
+\end_inset
+
+
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Polygon-from-Distmesh"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename report_images/polygon_coarse.png
+	scale 35
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Coarse mesh
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Coarse-mesh"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename report_images/polygon_fine.png
+	scale 35
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Fine mesh
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Fine-mesh"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename report_images/polygon_coarse_firstmode.png
+	scale 20
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Coarse mesh first mode with eigenvalue 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Coarse-mesh-first"
+
+\end_inset
+
+
+\begin_inset Formula $=2.3533$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename report_images/polygon_fine_firstmode.png
+	scale 20
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Fine mesh first mode with eigenvalue
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Fine-mesh-first"
+
+\end_inset
+
+ 
+\begin_inset Formula $=1.99$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Theoretical background
+\end_layout
+
+\begin_layout Standard
+This discrepancy comes from the discretization error from FEM, so it is
+ safe to assume that the material will look softer and softer as we refine
+ the mesh.
+ This is indeed the case, as indicated in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Ciarlet:1968:NMH:2716620.2716941"
+
+\end_inset
+
+ (lemma 3), where they showed that the approximate the general eigenvalue
+ problem of an elliptical B.V.P.
+ with Ritz approximation/Galerkin method will always lead to larger eigenvalues.
+ Intuitively, this comes from the fact that we are searching in a less inclusive
+ function space as we coarsen the mesh in the weak form of the elliptical
+ B.V.P.
+\end_layout
+
+\begin_layout Subsection
+More detailed discussion on a 1D example
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "report_summer_2017"
+options "plain"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

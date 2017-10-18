@@ -1,0 +1,381 @@
+%% LyX 2.2.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{esint}
+\usepackage{babel}
+\begin{document}
+
+\title{Summer report}
+
+\maketitle
+I investigated how to simulate soft elastic object effectively using
+only coarse meshes. We will break this investigation into 2 parts
+in this report
+\begin{enumerate}
+\item How to quickly fit the material property of an object to a FEM simulation
+through dynamics using DAC (\cite{Chen:2017:DNC:3072959.3073669}
+Section 3).
+\item Investigate FEM locking/numerical stiffening on coarse mesh. In particular,
+I looked at the cause and how it affects the simulation in static
+and dynamic.
+\end{enumerate}
+
+\section{Fitting Young's modulus using DAC\label{sec:Fitting-Young's-modulus}}
+
+The material properties of elastic objects specified by the manufacturer
+are often inaccurate (due to variation in fabrication process, I assume),
+and calibration is needed for each object. Fitting material properties
+through tracking is not an easy task. but DAC is a simple algorithm
+and work surprisingly well in the cases considered in \cite{Chen:2017:DNC:3072959.3073669}.
+DAC consists of the following steps:
+\begin{enumerate}
+\item Track the oscillation of a simple deformation mode of the object\label{enu:Track-the-oscillation}
+\item Solve the harmonic inverse problem \cite{doi:10.1063/1.475324} from
+the trajectory in \ref{enu:Track-the-oscillation}. and extract the
+dominating frequency (frequency with largest amplitude), $\omega_{l}$
+\label{enu:Solve-the-harmonic}
+\item Create a mesh for the FEM simulation, with initial Young's modulus
+$Y_{0}=1Pa$. Other material parameters (Poisson ratio, density, etc)
+are not fitted here, so will be set to some physical values and stay
+unchanged after DAC. For example Poisson ratio can be set to $P=0.48,$
+and the density $\rho$ is set to the value specified by the manufacturer.
+Also the material model can is arbitrary (linear, Neo-hookean etc)\label{enu:Create-a-mesh}
+\item Find the lowest the eigenvalue problem\label{enu:Find-the-lowest}
+\[
+Kx=\lambda_{l}Mx,
+\]
+where $K$ and $M$ are the stiffness matrix and mass matrix from
+the FEM simulation\footnote{If the model chosen in \ref{enu:Create-a-mesh}. is nonlinear, $K$
+must be chosen at a equilibrium state to ensure positive definiteness.} \ref{enu:Create-a-mesh}., with the same boundary conditions from
+the simple deformation in \ref{enu:Track-the-oscillation}.. 
+\item Rescale the Young's modulus by \ref{enu:Solve-the-harmonic}. and
+\ref{enu:Find-the-lowest}.\label{enu:Rescale-the-Young's}
+\[
+Y=Y_{0}\frac{\omega_{l}^{2}}{\lambda_{l}}
+\]
+\end{enumerate}
+This fitting is based on the fact that the eigenvalues of the system
+scale linearly with Young's modulus. After DAC, the Young's modulus
+can be used for simulating the same object \emph{with the same mesh}.
+The next section of this writeup investigate the mesh-dependent stiffness,
+which prevent us from using DAC on the same object with different
+mesh resolutions.
+
+\section{Mesh-dependent stiffness}
+
+Following the fact that Young's modulus scales linearly with the eigenvalue,
+we observed that different mesh resolution of same object would have
+different eigenvalues\footnote{As mesh gets finer and finer, the number of eigenvalue increases,
+and the new eigenvalues corresponds to the high oscillatory modes
+which damp out quickly. Here we are talking about lower eigenvalues,
+which correspond to the dominating dynamic modes with larger amplitudes,
+and should ideally stay the same across different mesh resolutions.}, meaning the apparent stiffness of the object is different, and the
+modes would oscillate at different frequencies.
+
+\subsection{A 2D Example}
+
+First start from an polygon shape object (from Distmesh \cite{Persson:2004aa})
+with 2 level of refinements (See Fig \ref{fig:Polygon-from-Distmesh},
+\ref{fig:Coarse-mesh}, \ref{fig:Fine-mesh}). Solve the general eigenvalue
+problem with Neumann B.C. for both mesh
+\[
+Kx=\lambda Mx
+\]
+and eliminate the null space corresponding to the rigid motion, we
+plot the lowest eigenmode in Fig \ref{fig:Coarse-mesh-first} and
+Fig \ref{fig:Fine-mesh-first}. These eigenmodes look similar on the
+object, but the eigenvalues are very different, $\lambda=2.35$ for
+the low resolution mesh, and $\lambda=1.99$ for the high resolution
+mesh, meaning simulating on the low resolution mesh would make the
+object look stiffer and oscillate faster. 
+
+\begin{figure}
+\includegraphics[scale=0.2]{report_images/polygon}
+
+\caption{Polygon from Distmesh \cite{Persson:2004aa}\label{fig:Polygon-from-Distmesh}}
+
+\end{figure}
+
+\begin{figure}
+\includegraphics[scale=0.35]{report_images/polygon_coarse}
+
+\caption{Coarse mesh\label{fig:Coarse-mesh}}
+
+\end{figure}
+
+\begin{figure}
+\includegraphics[scale=0.35]{report_images/polygon_fine}
+
+\caption{Fine mesh\label{fig:Fine-mesh}}
+
+\end{figure}
+
+\begin{figure}
+\includegraphics[scale=0.2]{report_images/polygon_coarse_firstmode}
+
+\caption{Coarse mesh first mode with eigenvalue \label{fig:Coarse-mesh-first}$=2.3533$}
+\end{figure}
+
+\begin{figure}
+\includegraphics[scale=0.2]{report_images/polygon_fine_firstmode}
+
+\caption{Fine mesh first mode with eigenvalue\label{fig:Fine-mesh-first} $=1.99$}
+
+\end{figure}
+
+\subsection{Theoretical background\label{subsec:Theoretical-background}}
+
+This discrepancy comes from the discretization error from FEM, so
+it is safe to assume that the material will look softer and softer
+as we refine the mesh. This is indeed the case, as indicated in \cite{Ciarlet:1968:NMH:2716620.2716941}
+(lemma 3), where they showed that the approximate the general eigenvalue
+problem of an elliptical B.V.P. with Ritz approximation/Galerkin method
+will always lead to larger eigenvalues. Intuitively, this comes from
+the fact that we are searching in a less inclusive function space
+as we coarsen the mesh in the weak form of the elliptical B.V.P.
+
+\subsection{A 1D example}
+
+In this subsection we discuss a 1D example in more detail and demonstrate
+DAC and it's drawback.
+
+\subsubsection{Continuous case}
+
+Consider the 1D wave equation with Dirichlet BC over an interval $x\in\left[0,L\right]$
+\begin{eqnarray}
+u_{tt} & = & c^{2}\nabla^{2}u\label{eq:wave eq}\\
+u(t,x=0) & = & u(t,x=L)=0\nonumber 
+\end{eqnarray}
+
+Look for the solution of the form
+\[
+u(t,x)=e^{i\sqrt{\lambda}t}U(x)
+\]
+is equivalent to solve the eigenvalue problem for the operator
+\begin{equation}
+\mathbb{L}U=-c^{2}\nabla^{2}U=\lambda U\label{eq:eigenvalue prob}
+\end{equation}
+The analytical solution for the eigenvalues: 
+\begin{equation}
+\lambda_{i}=\frac{(ic\pi)^{2}}{L^{2}}\;\,,i\in\mathbb{N}\label{eq:true eig}
+\end{equation}
+
+For example, with $L=1$, $i=1$ (the lowest eigenvalue) we have $\lambda_{1}=\pi^{2}c^{2}\approx9.86c^{2}$
+, and $\sqrt{\lambda_{1}}$ is the frequency (in time) of the dominating
+dynamic mode Semi-discretization
+
+It is common to do semi-discretization on (\ref{eq:wave eq}) in space,
+and step the resulting ODE in time to simulate the dynamics. This
+semi-discretization in space is highly related to the eigenvalue problem
+(\ref{eq:eigenvalue prob}). In a sense, (\ref{eq:eigenvalue prob})
+split the spatial variable from the time variable in (\ref{eq:wave eq}),
+just as how the semi-discretization split the spatial variable from
+the time variable. However, it is not clear 
+\begin{enumerate}
+\item how the discretization error from semi-discretizing in space can pollute
+the overall time trajectory (dynamic behavior), \label{enu:how-the-discretization}
+\item and how does this error affect the ODE time stepping error
+\end{enumerate}
+Here we will mainly focus on enum(\ref{enu:how-the-discretization}.).
+
+\subsubsection{Finite difference}
+
+The operator in (\ref{eq:eigenvalue prob}) is the negative Laplacian
+scaled. For finite difference in 1D with Dirichlet BCs the Laplacian
+matrix and eigenvalues are well-known. That is, using central differences
+on a uiform grid the FD matrix for (\ref{eq:eigenvalue prob})
+\begin{eqnarray*}
+A_{h}{\bf u} & = & \lambda_{h}{\bf u}\\
+A_{h} & = & \frac{-L^{2}c^{2}}{h^{2}}\left[\begin{array}{ccccc}
+2 & -1\\
+-1 & 2 & -1\\
+ & \ddots & \ddots & \ddots\\
+ &  & -1 & 2 & -1\\
+ &  &  & -1 & 2
+\end{array}\right]
+\end{eqnarray*}
+where $h$ is the interval size. The eigenvalues of this matrix is
+also well-known
+\begin{equation}
+\lambda_{h,i}=\frac{2c^{2}L^{2}}{h^{2}}\left(1-\cos(\frac{ih\pi}{L})\right),\ h\in\mathbb{Z}^{+},\ i\in[1,\frac{L}{h}]\label{eq:eval FD}
+\end{equation}
+
+Notice that the eigenvalue from (\ref{eq:eval FD}) approach the eigenvalues
+(\ref{eq:true eig}) from below as $h\rightarrow0.$ At first this
+seems contradictory to what we mentioned in \ref{subsec:Theoretical-background}
+and the lemma in \cite{Ciarlet:1968:NMH:2716620.2716941}. However,
+this is not the case, since finite difference discretization is not
+based on the weak form. 
+
+\begin{figure}
+\includegraphics[scale=0.3]{../1Dwave/FD_1D}
+
+\caption{}
+\end{figure}
+
+\subsubsection{Finite element}
+
+Another way to solve the eigenvalue problem (\ref{eq:eigenvalue prob})
+is using finite element. First convert (\ref{eq:eigenvalue prob})
+to the weak form
+\begin{eqnarray*}
+-c^{2}\int V\nabla^{2}Udx & =c^{2}\int\nabla U\nabla Vdx & -c^{2}\int\nabla\cdot(V\nabla U)dx
+\end{eqnarray*}
+and divergence theorem says the second term on the RHS is $0$ with
+Dirichlet BCs, so (\ref{eq:eigenvalue prob}) is
+\begin{equation}
+c^{2}\int\nabla U\nabla Vdx=\lambda\int VUdx\label{eq:weak form eig}
+\end{equation}
+In Galerkin method we choose the same linear hat function as the function
+space for $U$ and $V$. The resulting element stiffness matrix is
+\[
+K_{e,h}=\frac{Lc^{2}}{h}\left[\begin{array}{cc}
+1 & -1\\
+-1 & 1
+\end{array}\right]
+\]
+
+and element mass matrix from the RHS
+\[
+M_{e,h}=\frac{\lambda h}{6L}\left[\begin{array}{cc}
+2 & 1\\
+1 & 2
+\end{array}\right]
+\]
+After assembly and eliminate the boundary variables from Dirichlet
+BCs, we have the system
+\begin{eqnarray}
+K_{h}{\bf u} & = & \lambda M_{h}{\bf u}\label{eq:eig FE}\\
+K_{h} & = & \frac{-Lc^{2}}{h}\left[\begin{array}{ccccc}
+2 & -1\\
+-1 & 2 & -1\\
+ & \ddots & \ddots & \ddots\\
+ &  & -1 & 2 & -1\\
+ &  &  & -1 & 2
+\end{array}\right]\nonumber \\
+M_{h} & = & \frac{h}{6L}\left[\begin{array}{ccccc}
+4 & 2\\
+2 & 4 & 2\\
+ & \ddots & \ddots & \ddots\\
+ &  & 2 & 4 & 2\\
+ &  &  & 2 & 4
+\end{array}\right]\nonumber 
+\end{eqnarray}
+The analytical solution to the generalized eigenvalue problem (\ref{eq:eig FE})
+is not known yet, but it seems like it is following
+\begin{equation}
+\lambda_{h,i}=-\frac{2c^{2}L^{2}}{h^{2}}\left(1-\cosh(\frac{ih\pi}{L})\right),\ h\in\mathbb{Z}^{+},\ i\in[1,\frac{L}{h}].\label{eq:eig fe guess}
+\end{equation}
+Notice that (\ref{eq:eig fe guess}) approach (\ref{eq:true eig})
+from above as $h\rightarrow0$.
+
+\begin{figure}
+\includegraphics[scale=0.3]{../1Dwave/FE_1D}
+
+\caption{}
+\end{figure}
+
+\subsubsection{Story so far}
+
+The simple analysis above shows that, the eigenvalues to (\ref{eq:true eig}),
+which represents the dynamic property of the solution, is affected
+by the mesh resolution used in the semi-discretization. The effect
+is not huge numerically ($\mathcal{O}(h^{2}))$, but the resulting
+dynamic simulation may look very different. This is a simplest aspect
+of enum(\ref{enu:how-the-discretization}1.). A weird/interesting
+discovery on the path was that changing from FD to FE reversed the
+$h$-dependence of the eigenvalues. (Figure 1 is like a mirrored inverse
+of Figure 2, observed by Danny)
+
+\subsubsection{DAC fix }
+
+DAC provides a simple to match the dynamic property of the original
+continuous equation (\ref{eq:wave eq}). That is, we can scale the
+eigenvalue corresponding to the dominating mode (the lowest eigenvalue).
+If we do that, we can rescale the stiffness matrix by $\frac{\lambda_{1}}{\lambda_{h,1}}$.
+The resulting plot for the lowest eigenvalue is in Figure 3. The difference
+between the method in \cite{Chen:2017:DNC:3072959.3073669} and what
+I used here is that, the rescaling factor is derived from an analytical
+form of the lowest eigenvalue (the dominating mode), which is not
+always avaible. To handle more complicated objects, \cite{Chen:2017:DNC:3072959.3073669}
+used a vision-based technique to extract the dominating mode of motion,
+as described in Section \ref{sec:Fitting-Young's-modulus}.
+
+\begin{figure}
+\includegraphics[scale=0.3]{../1Dwave/FE_1D_fix}
+
+\caption{}
+\end{figure}
+
+\subsubsection{No free lunch}
+
+However, there's no free lunch, and this simple scaling won't fix
+other eigenvalues. For example, the second eigenvalue will be scaled
+to another number, but not its continuous counterpart, as shown in
+Figure 4. 
+
+\begin{figure}
+\includegraphics[scale=0.3]{../1Dwave/FE_1D_2nd_fix_wrong}
+
+\caption{}
+\end{figure}
+
+\subsection{2D static example}
+
+Here is another demonstration in the static setting
+
+\begin{figure}
+\includegraphics[scale=0.6]{report_images/static_tri_single}
+
+\caption{Force required to move a single triangle element\label{fig:Force-required-to}}
+
+\end{figure}
+
+\begin{figure}
+\includegraphics[scale=0.6]{report_images/static_tri_fine_mesh}
+
+\caption{Force required to achieve\label{fig:Force-required-to-1} the same
+deformation on a refined mesh}
+
+\end{figure}
+
+In Figure \ref{fig:Force-required-to} and \ref{fig:Force-required-to-1},
+the yellow triangle is the rest shape. In Figure \ref{fig:Force-required-to}
+we deformed the top node and have the lower 2 fixed, changing it into
+the blue triangle. The red arrows are the force required to hold the
+blue triangle in this deformed shape. If we refine the triangle, as
+shown in Figure \ref{fig:Force-required-to-1}, and perform the same
+operation, that is, move the top node while keeping the bottom two
+corners fixed (all other nodes are free), the force required at each
+nodes to keep the deformed triangle is much less.
+
+\subsection{Locking/Numerical Stiffening}
+
+The mesh-dependent stiffness is caused by the fact the function space
+spanned by the bases functions is not rich enough, which is also the
+same cause for the locking effect discussed in engineering literature:
+when the Poisson ratio is high, it takes force up to an order of magnitude
+larger to bend linear elements to the same amount of deformation on
+a coarse mesh. Thus it is worth trying different ways people mitigate
+locking. However, we should keep in mind that we have a different
+application:
+\begin{itemize}
+\item In engineering, the force magnitude is usually much larger, and the
+focus is usually the displacement
+\item For dynamic simulation in graphics, we also care about oscillation
+frequency, since collision is highly sensitive to the trajectory. 
+\end{itemize}
+
+\subsection{Discontinuous Galerkin}
+
+Discontinuous Galerkin has been used to solve this problem in \cite{kaufmann2009flexible},
+so the next step is to study this paper.
+
+\bibliographystyle{plain}
+\bibliography{report_summer_2017}
+
+\end{document}

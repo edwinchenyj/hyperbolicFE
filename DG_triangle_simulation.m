@@ -1,4 +1,4 @@
-function rect_simulation
+function DG_triangle_simulation
 
 clear all
 close all
@@ -13,22 +13,22 @@ tsteps = 120*3;
 
 fs = filesep;
 
-mesh_shape = 'rect';
+mesh_shape = 'triangle';
 
 constraints = 1; % types of constraint
 % 1: free
 
 deformation_mode_number = 1;
 
-Y = 10; % Young's modululs
-P = 0.49; % Poisson ratio
+Y = 1; % Young's modululs
+P = 0.48; % Poisson ratio
 rho = 1; % density
 a = 0.0; % rayleigh damping
-b = 0.0;
+b = 0.00;
 
-axis_box = [-0.5 .5 -3 1];
+axis_box = [-1 1.5 -0.5 1];
 
-maxA = 0.1;
+maxA = 0.01;
 
 meshname = sprintf('mesh_data%c%s_maxA_%.d',fs,mesh_shape, maxA);
 
@@ -50,14 +50,16 @@ elem(:,[1 3]) = elem(:,[3 1]);
 
 N = size(nodeM,1);
 
-filename = sprintf('sim_data%csimulation_%s_maxA_%.d_P_%.d', fs, mesh_shape,maxA,P);
+filename = sprintf('sim_data%csimulation_%s_maxA', fs, mesh_shape);
 if (exist([filename '.mat'], 'file') ~= 2) || rerun_flag
     
     % construct triangular mesh object
-    obj = elasticTriObj(nodeM, elem);
+    obj = elasticDGTriObj(nodeM, elem);
     
-    
-    obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to linear
+
+    obj.SetMaterial( Y, P, rho, 1:size(elem,1), 2); % set the tri to linear
+%     obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
+
     %
     Dx = 0*rand(2*N,1); % displacement field. set zero for rest state
     obj.SetCurrentState(Dx);
@@ -65,38 +67,45 @@ if (exist([filename '.mat'], 'file') ~= 2) || rerun_flag
     M = obj.M;
     K = obj.StiffnessMatrix;
     %         K = K(~ind_fix,~ind_fix); % extract the non-fixed part
-%     
-%     [V,D] = eig(full(K),full(M));
-%     [low_eig, permutation_indices] = sort(diag(D));
-%     V = -V(:,permutation_indices);
-%     firstMode = V(:,4)/2;
     
-%     save([filename '.mat'], 'obj','V','D');
+    [V,D] = eig(full(K),full(M));
+    [low_eig, permutation_indices] = sort(diag(D));
+    V = -V(:,permutation_indices);
+    firstMode = V(:,4)/2;
+    
+    save([filename '.mat'], 'obj','V','D');
 else
     load([filename '.mat']);
 %     load([filename '.mat'], );
 end
 
-% deformation_scale_factor = 2;
-% deformation_mode = V(:,3 + deformation_mode_number)/deformation_scale_factor;
+DGN = size(obj.DGnodeM,1);
 
-deformation_mode = zeros(numel(obj.node),1);
+obj.init_vis;
+obj.DG_vis(obj.vis_handle);
+TR = triangulation(obj.DGelem, obj.DGnodeM);
+E = edges(TR);
+
+%%
+% deformation for the initial condition
+deformation_scale_factor = 4;
+deformation_mode = V(:,3 + deformation_mode_number)/deformation_scale_factor;
 
 node = obj.node;
 positionsM = node';
 positionsM = positionsM(:);
 positions = positionsM;
 externalGravity  = zeros(size(positions));
-externalGravity(1:2:end) = -9.8;
 nFixed = 0;
 indLogical = true(size(positions));
 
-
-Xind_top = (abs(nodeM(:,1)-max(nodeM(:,1))) < 1e-6);
-nFixed = sum(Xind_top);
-ind_fix = reshape(transpose(repmat(Xind_top,1,2)),[],1); % logical index for total position vector
-
-indLogical(ind_fix) = false;
+DGnode = obj.DGnode;
+DGpositionsM = DGnode';
+DGpositionsM = DGpositionsM(:);
+DGpositions = DGpositionsM;
+DGexternalGravity  = zeros(size(DGpositions));
+DGindLogical = true(size(DGpositions));
+DGnFixed = 0;
 
 % files = dir(sprintf('sim_data%csimulation*.mat',fs));
 % for i_file = 1:length(files)
@@ -109,15 +118,21 @@ indLogical(ind_fix) = false;
 % end
 
 
-Dx = deformation_mode(indLogical);
-v = zeros(length(Dx),1);
+Dx = deformation_mode;
+% obj.SetCurrentState(Dx);
+% obj.current_vis(obj.vis_handle);
 
-u = [Dx; v];
+DGDx = obj.CGxToDGx(Dx);
+obj.SetCurrentDGState(DGDx);
+obj.DG_current_vis(obj.vis_handle);
+v = zeros(length(DGDx),1);
+
+u = [DGDx; v];
 
 
 if save_state && draw
     
-    vidname = strcat(filename,'.avi');
+    vidname = strcat(filename,'DG.avi');
     vid = VideoWriter(vidname);
     vid.FrameRate = 60;
     open(vid);
@@ -136,15 +151,17 @@ for ti = 1:tsteps
     if(draw)
         if or(mod(ti, draw_rate) == 1, draw_rate == 1)
 
-            positions(indLogical) = u(1:end/2) + positionsM(indLogical);
-            node = transpose(reshape(positions,2,[]));
-            triplot(elem,node(:,2),node(:,1),zeros(size(node,1),1),zeros(size(node,1),1));
-            %     trimesh(elem,node(:,1)+firstMode(1:2:end),node(:,2)+firstMode(2:2:end),zeros(size(node,1),1),zeros(size(node,1),1));
+%             DGnode = u(1:end/2) + DGpositionsM(DGindLogical);
+%             node = transpose(reshape(node,2,[]));
+%             trimesh(elem,node(:,1),node(:,2),zeros(size(node,1),1),zeros(size(node,1),1));
+%             %     trimesh(elem,node(:,1)+firstMode(1:2:end),node(:,2)+firstMode(2:2:end),zeros(size(node,1),1),zeros(size(node,1),1));
             axis(axis_box)
             axis equal
-            drawnow
+%             drawnow
+            cla
+            obj.DG_current_vis(obj.vis_handle);
             if save_state
-                frame = getframe(gcf);
+                frame = getframe;
                 writeVideo(vid,frame);
             end
         end
@@ -170,29 +187,29 @@ end
         dq_free_new = u_new(1:end/2);
         v_free_new = u_new(end/2+1:end);
         
-        positions(indLogical) = positionsM(indLogical) + dq_free + 1/4 * dt * (v_free + v_free_new);
+        DGpositions(DGindLogical) = DGpositionsM(DGindLogical) + dq_free + 1/4 * dt * (v_free + v_free_new);
         
-        obj.SetCurrentState(positions - positionsM);
+        obj.SetCurrentDGState(DGpositions - DGpositionsM);
         
-        K_mid = obj.StiffnessMatrix;
-        K_mid = 1/2 * (K_mid + K_mid');
+        K_mid = obj.DGStiffnessMatrix;
+%         K_mid = 1/2 * (K_mid + K_mid');
         %         K0 = obj.restStiffness;
-        Mass = obj.M;
-        Mass = Mass(indLogical,indLogical);
-        K_mid = K_mid(indLogical,indLogical);
+        Mass = obj.DGM;
+        Mass = Mass(DGindLogical,DGindLogical);
+        K_mid = K_mid(DGindLogical,DGindLogical);
         %         K0 = obj.K0;
         %         B = -a * Mass - b * K0(indLogical,indLogical);
         B = -a * Mass - b * K_mid;
         
-        Eforce_mid = obj.ElasticForce;
-        Eforce_mid = Eforce_mid(indLogical);
+        Eforce_mid = obj.DGElasticForce;
+        Eforce_mid = Eforce_mid(DGindLogical);
         
-        fExternal = Mass * externalGravity(indLogical);
+        fExternal = Mass * DGexternalGravity;
         
         f_mid = Eforce_mid + fExternal + B*1/2*(v_free + v_free_new);
         
         residual0 = (dt * (Mass\f_mid))' * (dt * (Mass\f_mid));
-        Dv = -(speye(2*(N-nFixed)) + 1/4* dt*dt*(Mass\K_mid) - 1/2 * dt*(Mass\B))\(v_free_new - v_free - dt * (Mass\f_mid));
+        Dv = -(speye(2*(DGN-DGnFixed)) + 1/4* dt*dt*(Mass\K_mid) - 1/2 * dt*(Mass\B))\(v_free_new - v_free - dt * (Mass\f_mid));
         v_free_new = v_free_new + Dv;
         
         residual = (v_free_new - v_free - dt * (Mass\f_mid))' * (v_free_new - v_free - dt * (Mass\f_mid));
@@ -207,34 +224,34 @@ end
             v_free_new = u_new(end/2+1:end);
             %             v_free_mid = 1/2 * (v_free_new + v_free);
             %             v(indLogical) = v_free_mid;
-            positions(indLogical) = positionsM(indLogical) + dq_free + 1/4*dt*(v_free + v_free_new);
+            DGpositions(DGindLogical) = DGpositionsM(DGindLogical) + dq_free + 1/4*dt*(v_free + v_free_new);
             
-            obj.SetCurrentState(positions - positionsM);
+            obj.SetCurrentDGState(DGpositions - DGpositionsM);
             
-            K_mid = obj.StiffnessMatrix;
-            K_mid = 1/2 * (K_mid + K_mid');
-            Mass = obj.M;
-            Mass = Mass(indLogical,indLogical);
-            K_mid = K_mid(indLogical,indLogical);
+            K_mid = obj.DGStiffnessMatrix;
+%             K_mid = 1/2 * (K_mid + K_mid');
+            Mass = obj.DGM;
+            Mass = Mass(DGindLogical,DGindLogical);
+            K_mid = K_mid(DGindLogical,DGindLogical);
             
-            K0 = obj.K0;
+%             K0 = obj.K0;
             %             B = -a * Mass - b * K0(indLogical,indLogical);
             B = -a * Mass - b * K_mid;
             
-            Eforce_mid = obj.ElasticForce;
-            Eforce_mid = Eforce_mid(indLogical);
+            Eforce_mid = obj.DGElasticForce;
+            Eforce_mid = Eforce_mid(DGindLogical);
             
-            fExternal = Mass * externalGravity(indLogical);
+            fExternal = Mass * DGexternalGravity;
             
             f_mid = Eforce_mid + fExternal + B*1/2*(v_free+v_free_new);
             
-            Dv = -(speye(2*(N-nFixed)) + 1/4* dt*dt*(Mass\K_mid) - 1/2 * dt*(Mass\B))\(v_free_new - v_free - dt * (Mass\f_mid));
+            Dv = -(speye(2*(DGN-DGnFixed)) + 1/4* dt*dt*(Mass\K_mid) - 1/2 * dt*(Mass\B))\(v_free_new - v_free - dt * (Mass\f_mid));
             v_free_new = v_free_new + Dv;
             
             residual = (v_free_new - v_free - dt * (Mass\f_mid))' * (v_free_new - v_free - dt * (Mass\f_mid));
             %             residual_list = [residual_list residual];
             %             Dv_norm_list = [Dv_norm_list Dv'*Dv];
-            it = it + 1
+            it = it + 1;
             
             u_new(1:end/2) = dq_free + 1/2 * dt * (v_free + v_free_new);
             u_new(end/2+1:end) = v_free_new;
@@ -246,10 +263,10 @@ end
                 v_free = u_half(end/2 + 1:end);
                 dq_free = u_half(1:end/2);
                 
-                v(indLogical) = v_free;
-                positions(indLogical) = positionsM(indLogical) + dq_free;
+                v(DGindLogical) = v_free;
+                DGpositions(DGindLogical) = DGpositionsM(DGindLogical) + dq_free;
                 
-                u_half = [positions(indLogical)-positionsM(indLogical); v(indLogical)];
+                u_half = [DGpositions(DGindLogical)-DGpositionsM(DGindLogical); v(DGindLogical)];
                 
                 u_new = IM(dt/2, u_half, obj);
                 break;

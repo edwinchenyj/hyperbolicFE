@@ -3,16 +3,16 @@ function load_simulation
 clear all
 close all
 
-video_name = 'coarse_tri.m4v';
+video_name = 'rect_comp_P_4e-01.m4v';
 
 % filename_list = {'triangle maxA1e-01_linear_longtimeTrajectory.mat','triangle maxA1e-01_linear_subTrajectory.mat','triangle maxA1e-02_linear_longtimeTrajectory.mat','triangle maxA1e-03_linear_longtimeTrajectory.mat'};
 % filename_list = {'triangle maxA1e-01_linear_longtimeTrajectory.mat','triangle maxA1e-01_linear_subTrajectory.mat'};
 % filename_list = {'simulation_rect_maxA_5e-04.mat','simulation_rect_maxA_1e-02.mat','simulation_rect_maxA_1e-01.mat'};
-filename_list = {'triangle maxA1e-01_linear_longtimeTrajectory.mat'};
+filename_list = {'simulation_rect_maxA_1e-01_P_4e-01.mat','simulation_rect_maxA_1e-02_P_4e-01.mat'};
 edge_colors = cell(size(filename_list));
-% edge_colors{1} = 'b';
-% edge_colors{2} = 'r';
 edge_colors{1} = 'b';
+edge_colors{2} = 'r';
+% edge_colors{1} = 'b';
 % edge_colors{4} = 'g';
 
 

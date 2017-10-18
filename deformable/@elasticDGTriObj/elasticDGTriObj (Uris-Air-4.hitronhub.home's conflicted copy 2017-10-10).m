@@ -1,4 +1,4 @@
-classdef elasticTriObj < handle
+classdef elasticDGTriObj < handle
 
     % elasticTriObj An elastic object represented by a triangle mesh
     %   Detailed explanation goes here
@@ -45,6 +45,7 @@ classdef elasticTriObj < handle
         nodeM; % nodal position in material (N by 2)
         elem; % element label (NT by 3): [N1 N2 N3]
         
+        
         x; % position vector in world (2N by 1)
         v; % velocity vector in world (2N by 1)
         X; % position vector in material, AKA rest pose (2N by 1)
@@ -57,6 +58,31 @@ classdef elasticTriObj < handle
         % definition: vec(F) = T * vec(x), or vec(dF) = T * vec(dx)
         M % mass matrix
         K0;
+        CGTri; % CG triangulation
+        
+        DGN; % #DG nodes (3NT)
+        DGnode; % DG nodal position in world (DGN by 2);
+        DGnodeM; % DG nodal position in world (DGN by 2);
+        DGelem; % DG elem list;
+        DGM; % DG mass matrix
+        DGK; % DG stiffnes matrix
+        
+        MapDGnode; % map from mesh nodal indices to indices in DGnode
+        DGTri; % DG triangulation
+        
+        HalfEdge; % half edges
+        Edge;
+        MapHalfEdgeToElement;
+        MapHalfEdge;
+        DGHalfEdge; % half edges
+        DGEdge;
+        
+        DGx;
+        DGv;
+        DGX;
+        
+        DGElement_ii;
+        DGElement_jj;
         
         ii; % sparse structure
         jj; % sparse structrue for the stiffness matrix
@@ -107,13 +133,13 @@ classdef elasticTriObj < handle
     end
     
     methods
-        function obj = elasticTriObj(varargin)
+        function obj = elasticDGTriObj(varargin)
             % Constructor 
             %   Take in an undeformed tri mesh with
             %       nodeM: (undeformed) nodal position in material (#nodes
             %       by 3)
             %       elem: element label (#element by 3) [N1 N2 N3]
-            if nargin == 1 && isa(varargin{1},'elasticTriObj')
+            if nargin == 1 && isa(varargin{1},'elasticDGTriObj')
                 % a deep-copy copy constructor
                 oldObj = varargin{1};
                 mc = metaclass(oldObj);
@@ -143,6 +169,18 @@ classdef elasticTriObj < handle
                 obj.nodeM = input_nodeM;
                 obj.elem = input_elem;
                 
+                obj.DGelem = zeros(size(obj.elem));
+                obj.DGN = 3 * obj.NT; % #DG nodes (3NT)
+                obj.DGnode = zeros(obj.DGN,2); % DG nodal position in world (DGN by 2);
+                obj.DGnodeM = zeros(obj.DGN,2); % DG nodal position in world (DGN by 2);
+                
+                obj.MapDGnode = cell(obj.N,1);
+                
+                % initialize the vector to zeros by flatten DGnode
+                obj.DGx = obj.DGnode(:);
+                obj.DGv = obj.DGnode(:);
+                obj.DGX = obj.DGnode(:);
+                
                 obj.X = reshape(input_nodeM',2*obj.N,1);
                 obj.Dm = zeros(2*obj.NT,2);
                 obj.DmINV = zeros(2*obj.NT,2);
@@ -154,11 +192,61 @@ classdef elasticTriObj < handle
                 obj.C = zeros(2*obj.NT,2);
                 obj.normC = zeros(obj.NT,1);
                 obj.M = sparse(size(obj.X,1),size(obj.X,1));
+                obj.DGM = sparse(size(obj.DGX,1),size(obj.DGX,1));
                 obj.W = zeros(obj.NT,1);
                 obj.T = zeros(4*obj.NT, 6);
+                
+                obj.Edge = []; % don't know the edge size when the mesh is created
+                obj.DGEdge = [];
+                obj.MapHalfEdgeToElement = [];
+                obj.MapHalfEdge = [];
+                
+                
+                obj.CGTri = triangulation(input_elem,input_nodeM);
+                
                 index = 1;
+                edge_index = 1;
+                
                 for i = 1:obj.NT
                     T_node = input_nodeM(input_elem(i,:),:); % element nodal position in material space  (#nodes per elements by 2)
+                    for iNode = 1:3
+                        if iNode == 1
+                            obj.MapDGnode{input_elem(i,iNode)} = [obj.MapDGnode{input_elem(i,iNode)} 3*(i-1)+1]; 
+                        elseif iNode == 2
+                            obj.MapDGnode{input_elem(i,iNode)} = [obj.MapDGnode{input_elem(i,iNode)} 3*(i-1)+2];
+                        else
+                            obj.MapDGnode{input_elem(i,iNode)} = [obj.MapDGnode{input_elem(i,iNode)} 3*i]; 
+                        end
+                    end
+                    obj.DGnodeM(3*(i-1)+1:3*i,:) = T_node;
+                    obj.DGelem(i,:) = (3*(i-1)+1:3*i);
+                    obj.HalfEdge = [obj.Edge; intput_elem(i,1) intput_elem(i,2); intput_elem(i,2) intput_elem(i,3); intput_elem(i,3) intput_elem(i,1)];
+                    obj.DGEdge = [obj.DGEdge; 3*(i-1)+1 3*(i-1)+2; 3*(i-1)+2 3*i; 3*i 3*(i-1)+1];
+                    
+                    % the map from half edges to the element it belongs to
+                    obj.MapHalfEdgeToElement = [obj.MapHalfEdgeToElement;...
+                        edge_index i;...
+                        edge_index + 1 i;...
+                        edge_index + 2 i];
+                    
+                    k1 = find(sum(obj.HalfEdge == [intput_elem(i,2) intput_elem(i,1)],2) == 2);
+                    if (~isempty(k1))
+                        obj.HalfEdge(k1,:) = [obj.HalfEdge(k1,:) intput_elem(i,2) intput_elem(i,1)];
+                        obj.HalfEdge(edge_index,:) = [obj.HalfEdge(k1,:) intput_elem(i,2) intput_elem(i,1)];
+
+                        obj.DGEdge(k1,:) = [obj.DGEdge(k1,:) 3*(i-1)+1 3*(i-1)+2];
+                    end
+                    k2 = find(sum(obj.HalfEdge == [intput_elem(i,3) intput_elem(i,2)],2) == 2);
+                    if (~isempty(k2))
+                        obj.HalfEdge(k2,:) = [obj.HalfEdge(k2,:) intput_elem(i,3) intput_elem(i,2)];
+                    end
+                    k3 = find(sum(obj.HalfEdge == [intput_elem(i,1) intput_elem(i,3)],2) == 2);
+                    if (~isempty(k3))
+                        obj.HalfEdge(k3,:) = [obj.HalfEdge(k3,:) intput_elem(i,1) intput_elem(i,3)];
+                    end
+                    
+                    edge_index = edge_index + 3;
+                    
                     obj.Dm(2*(i-1)+1:2*i,:) = T_node'*obj.G;
                     obj.DmINV(2*(i-1)+1:2*i,:) = inv(T_node'*obj.G);
                     obj.W(i) =  -det(T_node'*obj.G)/2; % undeformed volume from matrix determinant
@@ -177,19 +265,37 @@ classdef elasticTriObj < handle
                         for tj = 1:3
                             obj.ii(index:index+3) = repmat((2*(obj.elem(i,ti)-1)+1:2*obj.elem(i,ti))',2,1);
                             obj.jj(index:index+3) = reshape(repmat(2*(obj.elem(i,tj)-1)+1:2*obj.elem(i,tj),2,1),4,1);
+                            obj.DGElement_ii(index:index+3) = repmat((2*(obj.DGelem(i,ti)-1)+1:2*obj.DGelem(i,ti))',2,1);
+                            obj.DGElement_jj(index:index+3) = reshape(repmat(2*(obj.DGelem(i,tj)-1)+1:2*obj.DGelem(i,tj),2,1),4,1);
                             index = index + 4;
                         end
                     end
-                    
                 end
+                
+                
+                obj.DGTri = triangulation(obj.DGelem, obj.DGnodeM);
+                obj.DGX = obj.CGxToDGx(obj.X);
             end
             
         end
         
         SetCurrentState(obj, x)
+        SetCurrentDGState(obj, DGx)
         
         SetMaterial(obj, Y, P, Rho, elem, type)
         
+        function DGx = CGxToDGx(obj,CGx)
+            DGx = zeros(size(obj.DGx));
+            for i = 1:obj.N
+                Nx = CGx(obj.Dim*(i-1)+1:obj.Dim*i);
+                for iDG = obj.MapDGnode{i}
+                    DGx(obj.Dim*(iDG-1)+1: obj.Dim*iDG) = Nx;
+                end
+            end
+        end
+        
+%         function DGDx = CGDxToDGDx(obj,CGDx)
+%         end
         
         function ha = init_vis(obj)
             ha = axes;
@@ -220,6 +326,20 @@ classdef elasticTriObj < handle
             end
             
         end
+        
+        function DG_vis(obj,ax)
+            axes(ax);
+            triplot(obj.DGelem, obj.DGnodeM(:,1),obj.DGnodeM(:,2));
+            obj.vis_handle = ax;
+        end
+        
+                
+        function DG_current_vis(obj,ax)
+            axes(ax);
+            triplot(obj.DGelem, obj.DGnode(:,1),obj.DGnode(:,2));
+            obj.vis_handle = ax;
+        end
+        
         
         
         function N = GetNNodes(obj)
