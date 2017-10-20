@@ -45,6 +45,8 @@ switch obj.elemMaterialType(1)
         
     case 2
         if isempty(obj.DGK0)
+            index = 1;
+
             for t = 1:obj.NT
                 
                 mu = obj.mu(t);

@@ -113,7 +113,7 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
             % DGK_interface = sparse(size(obj.DGX,1),size(obj.DGX,1));
             % traverse the interface
             obj.DGK0 = DGK_k + obj.DGInterfaceStiffnessMatrix;
-            DGK = DGK_k + obj.DGK0;
+            DGK = obj.DGK0;
             
         else
             DGK = obj.DGK0;

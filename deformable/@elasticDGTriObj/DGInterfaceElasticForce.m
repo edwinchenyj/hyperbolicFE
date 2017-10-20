@@ -64,7 +64,7 @@ for e = 1:size(obj.HalfEdge,1)
                     + (B(1)*P0(1) + B(2)*P0(2) + 1/2 * B(1)*(P1(1) - P0(1)) + 1/2 * B(2) * (P1(2) - P0(2)))...
                     + c);
                 DGf_k(2*(verts_plus(i)-1)+j) = DGf_k(2*(verts_plus(i)-1)+j) - 1/2 * eta_t * f;
-                
+%                 
             end
         end
     end

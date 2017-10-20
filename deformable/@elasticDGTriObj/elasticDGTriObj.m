@@ -373,6 +373,8 @@ classdef elasticDGTriObj < handle
         
         function DG_current_vis(obj,ax,varargin)
             switch nargin
+                case 1
+                    triplot(obj.DGelem, obj.DGnode(:,1),obj.DGnode(:,2));
                 case 2
                     axes(ax);
                     triplot(obj.DGelem, obj.DGnode(:,1),obj.DGnode(:,2));
