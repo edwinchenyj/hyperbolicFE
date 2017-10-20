@@ -39,7 +39,6 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
             % element stiffness matrix
             
             Kt = W * tT'*C*tT;
-            Kt = 1/2 * (Kt + Kt');
             
             for ti = 1:3
                 for tj = 1:3
@@ -94,7 +93,6 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
                 % element stiffness matrix
                 
                 Kt = W * tT'*C*tT;
-                Kt = 1/2 * (Kt + Kt');
                 
                 for ti = 1:3
                     for tj = 1:3

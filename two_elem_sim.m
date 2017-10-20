@@ -22,7 +22,7 @@ switch simulation_type(1:2)
         isDG = false;
 end
 
-DGeta = 1e1;
+DGeta = 1e2;
 solver = 'SI';
 constraints = 1; % types of constraint
 % 1: free
@@ -34,7 +34,7 @@ P = 0.48; % Poisson ratio
 rho = 1; % density
 a = 0.0; % rayleigh damping
 b = 0.00;
-material = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
+material = 'linear'; % choice: 'linear', 'neo-hookean'
 
 axis_box = [-1 1.5 -0.5 1];
 
@@ -172,7 +172,7 @@ for ti = 1:tsteps
                 Mass = obj.M;
                 Eforce = obj.ElasticForce;
             end
-            K = 1/2 * (K + K');
+%             K = 1/2 * (K + K');
             
             Mass = Mass(indLogical,indLogical);
             K = K(indLogical,indLogical);
@@ -183,7 +183,7 @@ for ti = 1:tsteps
             fExternal = Mass * externalGravity;
             
             
-            f = Eforce + fExternal + B*u(end/2 + 1:end); % from column to row
+            f = Eforce + fExternal + B*u(end/2 + 1:end);
             
             A = (Mass - dt * B + dt^2 * K);
             v_free = u(end/2 + 1:end);
@@ -192,14 +192,15 @@ for ti = 1:tsteps
             
             u(end/2 +1 :end) = u(end/2 +1 :end) + dv_free;
             u(1:end/2) = u(1:end/2) + dt * u(end/2+1:end);
-            dq_free = u(1:end/2);
-            v_free = u(end/2+1:end);
-            u_new = u;
-            dq_free_new = u_new(1:end/2);
-            v_free_new = u_new(end/2+1:end);
-            
-            positions(indLogical) = positionsM(indLogical) + dq_free + 1/4 * dt * (v_free + v_free_new);
-            
+%             dq_free = u(1:end/2);
+%             v_free = u(end/2+1:end);
+%             u_new = u;
+%             dq_free_new = u_new(1:end/2);
+%             v_free_new = u_new(end/2+1:end);
+%             
+%             positions(indLogical) = positionsM(indLogical) + dq_free + 1/4 * dt * (v_free + v_free_new);
+            positions(indLogical) = positionsM(indLogical) +  u(1:end/2);
+
             if isDG
                 obj.SetCurrentDGState(positions - positionsM);
             else
@@ -318,8 +319,6 @@ save([simdir fs 'trajectory.mat']);
             v_free_new = v_free_new + Dv;
             
             residual = (v_free_new - v_free - dt * (Mass\f_mid))' * (v_free_new - v_free - dt * (Mass\f_mid));
-            %             residual_list = [residual_list residual];
-            %             Dv_norm_list = [Dv_norm_list Dv'*Dv];
             it = it + 1;
             
             u_new(1:end/2) = dq_free + 1/2 * dt * (v_free + v_free_new);

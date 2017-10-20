@@ -3,7 +3,7 @@ function load_compare_simulation
 clear all
 close all
 
-video_name = 'DGBZ_eta_1e0_triangle_resolution.avi';
+video_name = 'DGBZ_eta_1e0_triangle_resolution_IM.avi';
 
 fs = filesep;
 
@@ -30,7 +30,7 @@ switch simulation_type(1:2)
 end
 
 DGeta = 1e0;
-solver = 'SI';
+solver = 'IM';
 constraints = 1; % types of constraint
 % 1: free
 
@@ -52,7 +52,7 @@ material = 'linear'; % choice: 'linear', 'neo-hookean'
 
 axis_box = [-1 1.5 -0.5 1];
 
-maxA_list = [0.1 0.01 0.001];
+maxA_list = [0.1 0.01 ];
 filename_list = cell(1,length(maxA_list));
 
 for i_maxA = 1:length(maxA_list)

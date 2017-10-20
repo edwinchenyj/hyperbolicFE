@@ -15,17 +15,8 @@ fs = filesep;
 
 mesh_shape = 'triangle';
 maxA = 0.1;
-simulation_type = 'DGBZ';
+simulation_type = 'CG';
 
-% set the DG flag base on simulation type
-switch simulation_type(1:2)
-    case 'DG'
-        isDG = true;
-    otherwise
-        isDG = false;
-end
-
-DGeta = 1e0;
 solver = 'IM';
 constraints = 1; % types of constraint
 % 1: free

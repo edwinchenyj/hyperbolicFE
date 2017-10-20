@@ -22,7 +22,7 @@ switch simulation_type(1:2)
         isDG = false;
 end
 
-DGeta = 1e1;
+DGeta = 1e-1;
 solver = 'SI';
 constraints = 1; % types of constraint
 % 1: free
@@ -34,7 +34,7 @@ P = 0.48; % Poisson ratio
 rho = 1; % density
 a = 0.0; % rayleigh damping
 b = 0.00;
-material = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
+material = 'linear'; % choice: 'linear', 'neo-hookean'
 
 axis_box = [-1 1.5 -0.5 1];
 
@@ -174,7 +174,6 @@ for ti = 1:tsteps
                 Mass = obj.M;
                 Eforce = obj.ElasticForce;
             end
-            K = 1/2 * (K + K');
             
             Mass = Mass(indLogical,indLogical);
             K = K(indLogical,indLogical);

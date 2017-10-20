@@ -36,9 +36,9 @@ for t = 1:obj.NT
     
     % element stiffness matrix
     
-    Kt = W * tT'*C*tT;
-    Kt = 1/2 * (Kt + Kt');
-    
+        Kt = W * tT'*C*tT;
+
+
     for ti = 1:3
         for tj = 1:3
 %            sA(index:index+3) = Kt(obj.IndK(3*(ti-1) + tj,:));
