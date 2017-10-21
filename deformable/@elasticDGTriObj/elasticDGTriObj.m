@@ -473,6 +473,29 @@ classdef elasticDGTriObj < handle
         test_modes_free()
         test_rect_free()
         test_bending()
+        
+        function out = quadratic_line_int(p0,p1,A)
+            len = norm(p1 - p0);
+            x0 = p0(1); y0 = p0(2);
+            x1 = p1(1); y1 = p1(2);
+            a11 = A(1,1); a12 = A(1,2); a21 = A(2,1); a22 = A(2,2);
+            out = len * ( a11/3 * (x1*x1 + x1*x0 + x0*x0)...
+                + a22/3 * (y1*y1 + y1*y0 + y0*y0)...
+                + (a12 + a21) * (1/6*x0*y1 + 1/6*y0*x1 + 1/3*x1*y1 + 1/3*x0*y0));
+        end
+        
+        function out = outlinear_line_int(p0,p1,b)
+            len = norm(p1 - p0);
+            x0 = p0(1); y0 = p0(2);
+            x1 = p1(1); y1 = p1(2);
+            b1 = b(1); b2 = b(2);
+            out = len * (b1*x0 + b2*y0 + 1/2*b1*(x1-x0) + 1/2*b2*(y1-y0));
+        end
+        
+        function out = const_line_int(p0,p1,c)
+            len = norm(p1 - p0);
+            out = c*len;
+        end
     end
     
 end

@@ -80,14 +80,7 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
                 elseif (obj.elemMaterialType(t) == 3)
                     
                 end
-                %     obj.C = C;
-                %     disp('dFdx = [')
-                %     disp(tT)
-                %     disp('];')
-                %     obj.dFdx = tT;
-                %     disp('C= [')
-                %     disp(C)
-                %     disp('];')
+
                 
                 
                 % element stiffness matrix
@@ -117,4 +110,5 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
             DGK = obj.DGK0;
         end
 end
+assert(max(max(DGK - DGK')) < 1e-6); % stiffness matrix should be symmetric
 end
