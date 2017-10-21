@@ -22,7 +22,7 @@ switch simulation_type(1:2)
         isDG = false;
 end
 
-DGeta = 1e0;
+DGeta = 1e1;
 solver = 'SI';
 constraints = 1; % types of constraint
 % 1: free
@@ -34,12 +34,14 @@ P = 0.48; % Poisson ratio
 rho = 1; % density
 a = 0.0; % rayleigh damping
 b = 0.00;
-material = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
+material = 'linear'; % choice: 'linear', 'neo-hookean'
 
 axis_box = [-1 1.5 -0.5 1];
 
 elem = [1 2 3; 2 4 3; 2 5 4; 5 6 4];
 nodeM = [0 0; 1 0; 0 1; 1 1; 2 0; 2 1]/2;
+
+
 % nodeM(:,1) = nodeM(:,1) - 1/2;
 % nodeM(:,2) = nodeM(:,2) - 1/4;
 %%

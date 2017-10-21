@@ -26,9 +26,18 @@ rho = 1; % density
 a = 0.0; % rayleigh damping
 b = 0.00;
 
-elem = [1 2 3; 2 4 3];
-nodeM = [0 0; 1 0; 0 1; 1 1]/2;
-N = 4;
+% elem = [1 2 3; 2 4 3];
+% nodeM = [0 0; 1 0; 0 1; 1 1]/2;
+% N = 4;
+
+
+elem = [1 2 3; 2 4 3; 2 5 4; 5 6 4];
+nodeM = [0 0; 1 0; 0 1; 1 1; 2 0; 2 1]/2;
+
+elem = [1 2 3; 2 4 3; 2 6 4; 2 5 6];
+nodeM = [0 0; 1 0; 0 1; 1 1; 2 0; 2 1]/2 ;
+
+N = 6;
 
 % construct triangular mesh object
 obj = elasticDGTriObj(nodeM, elem);

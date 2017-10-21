@@ -88,4 +88,7 @@ for e = 1:size(obj.HalfEdge,1)
         end
     end
 end
+
+assert(max(max(DGK_interface - DGK_interface')) < 1e-5); % stiffness matrix should be symmetric
+
 end

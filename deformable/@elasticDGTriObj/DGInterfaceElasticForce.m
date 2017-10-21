@@ -36,8 +36,9 @@ for e = 1:size(obj.HalfEdge,1)
                 % the element corresponding to the inside edge
                 A = (obj.I2(:,j)*obj.G(i,:)*D_minus)' * F_minus + F_minus' * (obj.I2(:,j)*obj.G(i,:)*D_minus)...
                     - (obj.I2(:,j)*obj.G(i,:)*D_minus)' * F_plus - F_plus' * (obj.I2(:,j)*obj.G(i,:)*D_minus);
-                B = 2 * (b_minus - b_plus)' * (obj.I2(:,j)*obj.G(i,:)*D_minus) ...
-                    + 2 * (obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_minus * obj.DGnodeM(verts_minus(1),:)')' * (F_minus - F_plus);
+                B =  2*(b_minus - b_plus)' * (obj.I2(:,j)*obj.G(i,:)*D_minus) ...
+                    + 2 *(obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_minus * obj.DGnodeM(verts_minus(1),:)')' * (F_minus - F_plus);
+                
 %                 B= [0 0]';
                 c = (obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_minus * (obj.DGnodeM(verts_minus(1),:)'))' * (b_minus - b_plus)...
                     + ((b_minus - b_plus)') * (obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_minus * (obj.DGnodeM(verts_minus(1),:)'));
@@ -46,6 +47,7 @@ for e = 1:size(obj.HalfEdge,1)
                     +( A(1,2) + A(2,1) ) * ( 1/6 * P0(1) * P1(2) + 1/6 * P0(2) * P1(1) + 1/3 * P1(1)*P1(2) + 1/3 * P0(1) * P0(2))...
                     + (B(1)*P0(1) + B(2)*P0(2) + 1/2 * B(1)*(P1(1) - P0(1)) + 1/2 * B(2) * (P1(2) - P0(2)))...
                     + c);
+%                 f2 = obj.quadratic_line_int(P0,P1,A) + obj.linear_line_int(P0,P1,B) + obj.const_line_int(P0,P1,c);    
                 DGf_k(2*(verts_minus(i)-1)+j) = DGf_k(2*(verts_minus(i)-1)+j) - 1/2 *  eta_t * f;
                 
                 

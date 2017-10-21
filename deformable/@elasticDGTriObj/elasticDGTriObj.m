@@ -230,7 +230,9 @@ classdef elasticDGTriObj < handle
                     obj.DGelem(i,:) = (3*(i-1)+1:3*i);
                     obj.HalfEdge = [obj.HalfEdge; input_elem(i,1) input_elem(i,2) 0 0; input_elem(i,2) input_elem(i,3) 0 0; input_elem(i,3) input_elem(i,1) 0 0];
                     obj.DGEdge = [obj.DGEdge; 3*(i-1)+1 3*(i-1)+2 0 0; 3*(i-1)+2 3*i 0 0; 3*i 3*(i-1)+1 0 0 ];
-                    obj.HalfEdgeLength = [obj.HalfEdgeLength; norm([input_elem(i,1) input_elem(i,2)]); norm([input_elem(i,2) input_elem(i,3)]); norm([input_elem(i,3) input_elem(i,1)])];
+                    obj.HalfEdgeLength = [obj.HalfEdgeLength; norm(input_nodeM(input_elem(i,1),:)-input_nodeM(input_elem(i,2),:));...
+                        norm(input_nodeM(input_elem(i,2),:)-input_nodeM(input_elem(i,3),:));...
+                        norm(input_nodeM(input_elem(i,3),:)-input_nodeM(input_elem(i,1),:))];
                     % the map from half edges to the element it belongs to
                     obj.MapHalfEdgeToElement = [obj.MapHalfEdgeToElement;
                         i;...
@@ -484,7 +486,7 @@ classdef elasticDGTriObj < handle
                 + (a12 + a21) * (1/6*x0*y1 + 1/6*y0*x1 + 1/3*x1*y1 + 1/3*x0*y0));
         end
         
-        function out = outlinear_line_int(p0,p1,b)
+        function out = linear_line_int(p0,p1,b)
             len = norm(p1 - p0);
             x0 = p0(1); y0 = p0(2);
             x1 = p1(1); y1 = p1(2);
