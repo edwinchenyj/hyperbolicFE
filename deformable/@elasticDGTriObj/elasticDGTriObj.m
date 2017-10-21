@@ -76,6 +76,7 @@ classdef elasticDGTriObj < handle
         MapHalfEdge;
         DGHalfEdge; % half edges
         HalfEdgeLength;
+        HalfEdgeUnitOutNormal;
         DGEdge;
         DGInterface; % DG interface
         
@@ -199,6 +200,7 @@ classdef elasticDGTriObj < handle
                 obj.W = zeros(obj.NT,1);
                 obj.T = zeros(4*obj.NT, 6);
                 obj.HalfEdgeLength = zeros(0,1);
+                obj.HalfEdgeUnitOutNormal = zeros(0,1);
                 obj.HalfEdge = zeros(0,4); % don't know the edge size when the mesh is created
                 obj.DGEdge = zeros(0,4);
                 
@@ -226,13 +228,22 @@ classdef elasticDGTriObj < handle
                             obj.MapDGnode{input_elem(i,iNode)} = [obj.MapDGnode{input_elem(i,iNode)} 3*i];
                         end
                     end
+                    vol = det(T_node'*obj.G)/2; % undeformed volume from matrix determinant
+                    assert(vol > 0, 'need to fix mesh orientation'); % if volume not positive, the input mesh need to be fixed
+                    obj.W(i) =  vol;
                     obj.DGnodeM(3*(i-1)+1:3*i,:) = T_node;
                     obj.DGelem(i,:) = (3*(i-1)+1:3*i);
                     obj.HalfEdge = [obj.HalfEdge; input_elem(i,1) input_elem(i,2) 0 0; input_elem(i,2) input_elem(i,3) 0 0; input_elem(i,3) input_elem(i,1) 0 0];
                     obj.DGEdge = [obj.DGEdge; 3*(i-1)+1 3*(i-1)+2 0 0; 3*(i-1)+2 3*i 0 0; 3*i 3*(i-1)+1 0 0 ];
-                    obj.HalfEdgeLength = [obj.HalfEdgeLength; norm(input_nodeM(input_elem(i,1),:)-input_nodeM(input_elem(i,2),:));...
-                        norm(input_nodeM(input_elem(i,2),:)-input_nodeM(input_elem(i,3),:));...
-                        norm(input_nodeM(input_elem(i,3),:)-input_nodeM(input_elem(i,1),:))];
+                    dE1 = input_nodeM(input_elem(i,2),:)-input_nodeM(input_elem(i,1),:);
+                    dE2 = input_nodeM(input_elem(i,3),:)-input_nodeM(input_elem(i,2),:);
+                    dE3 = input_nodeM(input_elem(i,1),:)-input_nodeM(input_elem(i,3),:);
+                    obj.HalfEdgeLength = [obj.HalfEdgeLength; norm(dE1);...
+                        norm(dE2);...
+                        norm(dE3)];
+                    obj.HalfEdgeUnitOutNormal = [obj.HalfEdgeUnitOutNormal; normc([dE1(2); -dE1(1)])';...
+                        normc([dE2(2); -dE2(1)])';...
+                        normc([dE3(2); -dE3(1)])'];
                     % the map from half edges to the element it belongs to
                     obj.MapHalfEdgeToElement = [obj.MapHalfEdgeToElement;
                         i;...
@@ -273,8 +284,7 @@ classdef elasticDGTriObj < handle
                     
                     obj.Dm(2*(i-1)+1:2*i,:) = T_node'*obj.G;
                     obj.DmINV(2*(i-1)+1:2*i,:) = inv(T_node'*obj.G);
-                    obj.W(i) =  -det(T_node'*obj.G)/2; % undeformed volume from matrix determinant
-                    % using the negative determinant because of orientation
+
                     obj.T(4*(i-1)+1:4*i,:) = kron((obj.G * obj.DmINV(2*(i-1)+1:2*i,:))', obj.I2); % definition: vec(F) = T * vec(x), or vec(dF) = T * vec(dx)
                     
                     for ti = 1:3

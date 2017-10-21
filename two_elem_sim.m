@@ -44,7 +44,7 @@ nodeM = [0 0; 1 0; 0 1; 1 1]/2;
 
 
 % fix the orientation
-elem(:,[1 3]) = elem(:,[3 1]);
+% elem(:,[1 3]) = elem(:,[3 1]);
 
 N = size(nodeM,1);
 
