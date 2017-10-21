@@ -26,15 +26,6 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
             elseif (obj.elemMaterialType(t) == 3)
                 
             end
-            %     obj.C = C;
-            %     disp('dFdx = [')
-            %     disp(tT)
-            %     disp('];')
-            %     obj.dFdx = tT;
-            %     disp('C= [')
-            %     disp(C)
-            %     disp('];')
-            
             
             % element stiffness matrix
             

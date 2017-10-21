@@ -24,7 +24,7 @@ switch simulation_type(1:2)
         isDG = false;
 end
 DGeta_list = [1e1 1e0 1e-1 1e-2 1e-3];
-DGeta_list = logspace(-2,1);
+DGeta_list = logspace(-2,2);
 
 constraints = 1; % types of constraint
 % 1: free

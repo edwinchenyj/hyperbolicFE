@@ -277,14 +277,6 @@ classdef elasticDGTriObj < handle
                     % using the negative determinant because of orientation
                     obj.T(4*(i-1)+1:4*i,:) = kron((obj.G * obj.DmINV(2*(i-1)+1:2*i,:))', obj.I2); % definition: vec(F) = T * vec(x), or vec(dF) = T * vec(dx)
                     
-                    %                     % simple mass lumping by distributing equally
-                    %                     % probably not the most accurate one...
-                    %                     for e = input_elem(i,:)
-                    %                         for mi = (e-1)*2+1:e*2
-                    %                             obj.M(mi,mi) = obj.M(mi,mi)+obj.W(i)/3;
-                    %                         end
-                    %                     end
-                    %
                     for ti = 1:3
                         for tj = 1:3
                             obj.ii(index:index+3) = repmat((2*(obj.elem(i,ti)-1)+1:2*obj.elem(i,ti))',2,1);

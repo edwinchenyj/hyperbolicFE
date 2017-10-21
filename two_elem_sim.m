@@ -23,7 +23,7 @@ switch simulation_type(1:2)
 end
 
 DGeta = 1e2;
-solver = 'SI';
+solver = 'IM';
 constraints = 1; % types of constraint
 % 1: free
 deformation_scale_factor = 10;
