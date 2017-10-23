@@ -2,6 +2,7 @@ function DGK_interface = DGInterfaceStiffnessMatrix(obj)
 % construct and return the interface DG stiffness matrix under the current deformation,
 % this can be calculated using current deformation state as the only input
 
+% TODO: vectorize dF/dx using obj.T
 DGK_interface = sparse(size(obj.DGx,1),size(obj.DGx,1));
 % traverse the interface
 for e = 1:size(obj.HalfEdge,1)

@@ -56,13 +56,13 @@ options = optimoptions('fsolve','TolFun',1.e-9,'TolX',1.e-9,'Display','final');
 %%
 
 
-% fix the orientation
-% fix x y for CG, but probably some other things need to be fixed..
-if ~isDG
-    nodeM(:,[1 2]) = nodeM(:,[2 1]);
-end
-[nodeM, elem] = fixmesh(nodeM, elem);
-elem(:,[1 3]) = elem(:,[3 1]);
+% % fix the orientation
+% % fix x y for CG, but probably some other things need to be fixed..
+% if ~isDG
+%     nodeM(:,[1 2]) = nodeM(:,[2 1]);
+% end
+% [nodeM, elem] = fixmesh(nodeM, elem);
+% elem(:,[1 3]) = elem(:,[3 1]);
 
 N = size(nodeM,1);
 
