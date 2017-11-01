@@ -70,6 +70,9 @@ classdef elasticDGTriObj < handle
         MapDGnode; % map from mesh nodal indices to indices in DGnode
         DGTri; % DG triangulation
         
+        DGBZ;
+        DGIP;
+        
         HalfEdge; % half edges
         Edge;
         MapHalfEdgeToElement;

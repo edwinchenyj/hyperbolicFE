@@ -1,6 +1,6 @@
 function P = Stress(obj, t)
-% calculate the first Piola-Kirchhoff stress tensor of the given tet element
-%       t = index of the tetrahedron element
+% calculate the first Piola-Kirchhoff stress tensor of the given tri element
+%       t = index of the tri element
 type = obj.elemMaterialType(t);
 tF = obj.F(2*(t-1)+1:2*t,:);
 tFINV = obj.FINV(2*(t-1)+1:2*t,:);

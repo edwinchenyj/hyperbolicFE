@@ -3,7 +3,7 @@ function load_compare_simulation_polyfit
 clear all
 close all
 
-video_name = 'CG_polyfit_off_SI.avi';
+video_name = 'CG_polyfit_on_SI.avi';
 
 fs = filesep;
 
@@ -21,7 +21,7 @@ mesh_shape = 'triangle';
 maxA = 0.001;
 simulation_type = 'CG';
 NE = 3;
-polyfit_on = false;
+polyfit_on = true;
 
 % set the DG flag base on simulation type
 switch simulation_type(1:2)
