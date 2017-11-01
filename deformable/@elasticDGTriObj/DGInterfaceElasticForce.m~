@@ -93,8 +93,7 @@ for e = 1:size(obj.HalfEdge,1)
         for i = 1:3
             for j = 1:2
                 % the element corresponding to the inside edge
-                B = 1/2 * kron(outward_n, reshape(obj.T(4*(elem_minus)-1:4*elem_minus,2*(i-1)+j),2,2))' * reshape(obj.Stress(elem_minus) + obj.Stress(elem_plus),[],1)...
-                    + 1/2 * (kron(outward_n,F_minus) - kron(outward_n,F_plus));
+                B = 1/2 * outward_n
                 c = (obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_minus * (obj.DGnodeM(verts_minus(1),:)'))' * (b_minus - b_plus)...
                     + ((b_minus - b_plus)') * (obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_minus * (obj.DGnodeM(verts_minus(1),:)'));
                 f = obj.linear_line_int(P0,P1,B) + obj.const_line_int(P0,P1,c);    

@@ -188,6 +188,10 @@ classdef elasticDGTriObj < handle
                 obj.DGv = obj.DGnode(:);
                 obj.DGX = obj.DGnode(:);
                 
+                % initialize DG to be BZ and IP
+                obj.DGBZ = true;
+                obj.DGIP = true;
+                
                 obj.X = reshape(input_nodeM',2*obj.N,1);
                 obj.Dm = zeros(2*obj.NT,2);
                 obj.DmINV = zeros(2*obj.NT,2);
@@ -254,13 +258,14 @@ classdef elasticDGTriObj < handle
                         i];
                     
                     % find if the same edge has been added as the
-                    % neighboring half edge
+                    % neighboring half edge 
+                    % search in the reverse order because of orientation
                     %                     k1 = find(sum(obj.HalfEdge(:,1:2) == [input_elem(i,2) input_elem(i,1)],2) == 2);
                     k1 = find(ismember(obj.HalfEdge(:,1:2), [input_elem(i,2) input_elem(i,1)],'rows'));
                     if (~isempty(k1))
-                        obj.HalfEdge(k1,3:4) = [input_elem(i,2) input_elem(i,1)];
+                        obj.HalfEdge(k1,3:4) = [input_elem(i,1) input_elem(i,2)];
                         obj.HalfEdge(edge_index,3:4) = obj.HalfEdge(k1,1:2);
-                        obj.DGEdge(k1,3:4) = [input_elem(i,2) input_elem(i,1)];
+                        obj.DGEdge(k1,3:4) = [input_elem(i,1) input_elem(i,2)];
                         obj.DGEdge(edge_index,3:4) = obj.DGEdge(k1,1:2);
                         obj.MapHalfEdge(k1) = edge_index;
                         obj.MapHalfEdge(edge_index) = k1;
@@ -463,7 +468,7 @@ classdef elasticDGTriObj < handle
     
     methods (Access = private)
         P = Stress(obj, t)
-        
+        C = FourtOrderTensor(obj, t)
         dP = StressDifferential(obj, t, dF)
         
         
