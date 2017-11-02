@@ -12,7 +12,7 @@ tsteps = 120*1;
 fs = filesep;
 
 mesh_shape = 'two_elem';
-simulation_type = 'DGBZ';
+simulation_type = 'DGIP';
 
 % set the DG flag base on simulation type
 switch simulation_type(1:2)
