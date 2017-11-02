@@ -19,6 +19,8 @@ for e = 1:size(obj.HalfEdge,1)
         D_minus = obj.DmINV(2*(elem_minus-1)+1:2*elem_minus,:);
         D_plus = obj.DmINV(2*(elem_plus-1)+1:2*elem_plus,:);
         
+        outward_n = obj.HalfEdgeUnitOutNormal(e,:)'; % column vector for the normal
+            
         Len = obj.HalfEdgeLength(e);
         P0 = obj.DGnodeM(obj.DGEdge(e,1),:)';
         P1 = obj.DGnodeM(obj.DGEdge(e,2),:)';
@@ -69,6 +71,40 @@ for e = 1:size(obj.HalfEdge,1)
                         
                         DGK_interface(2*(verts_plus(k)-1)+l,2*(verts_plus(i)-1)+j) = DGK_interface(2*(verts_plus(k)-1)+l,2*(verts_plus(i)-1)+j) + 1/2 * eta_t * f;
                         
+                        
+                        if obj.DGIP
+                            % the element corresponding to the inside edge
+                            B = 1/2 * kron(outward_n, reshape(obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(i-1)+j),2,2))' * obj.FourthOrderTensor(elem_minus) * obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(k-1)+l)...
+                                + 1/2 * kron(outward_n, reshape(obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(k-1)+l),2,2))' * obj.FourthOrderTensor(elem_minus) * obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(i-1)+j);
+                            c = 1/2 * (obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_minus * (obj.DGnodeM(verts_minus(1),:)'))' * kron(outward_n,obj.I2)' * obj.FourthOrderTensor(elem_minus) * obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(k-1)+l)...
+                                + 1/2 *(obj.I2(:,l) * bary(k) - obj.I2(:,l)*obj.G(k,:)*D_minus * (obj.DGnodeM(verts_minus(1),:)'))' * kron(outward_n,obj.I2)' * obj.FourthOrderTensor(elem_minus) * obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(i-1)+j);
+                            f = obj.linear_line_int(P0,P1,B) + obj.const_line_int(P0,P1,c);
+                            DGK_interface(2*(verts_minus(k)-1)+l,2*(verts_minus(i)-1)+j) = DGK_interface(2*(verts_minus(k)-1)+l,2*(verts_minus(i)-1)+j) + 1/2 * eta_t * f;
+                        
+                            B = 1/2 * kron(outward_n, reshape(obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(i-1)+j),2,2))' * obj.FourthOrderTensor(elem_plus) * obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(k-1)+l)...
+                                - 1/2 * kron(outward_n, reshape(obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(k-1)+l),2,2))' * obj.FourthOrderTensor(elem_minus) * obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(i-1)+j);
+                            c = 1/2 * (obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_minus * (obj.DGnodeM(verts_minus(1),:)'))' * kron(outward_n,obj.I2)' * obj.FourthOrderTensor(elem_plus) * obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(k-1)+l)...
+                                - 1/2 *(obj.I2(:,l) * bary(k) - obj.I2(:,l)*obj.G(k,:)*D_plus * (obj.DGnodeM(verts_plus(1),:)'))' * kron(outward_n,obj.I2)' * obj.FourthOrderTensor(elem_minus) * obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(i-1)+j);
+                            f = obj.linear_line_int(P0,P1,B) + obj.const_line_int(P0,P1,c);
+                            DGK_interface(2*(verts_plus(k)-1)+l,2*(verts_minus(i)-1)+j) = DGK_interface(2*(verts_plus(k)-1)+l,2*(verts_minus(i)-1)+j) + 1/2 * eta_t * f;
+                    
+                            % the element corresponding to the outside edge
+                            B = -1/2 * kron(outward_n, reshape(obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(i-1)+j),2,2))' * obj.FourthOrderTensor(elem_minus) * obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(k-1)+l)...
+                                + 1/2 * kron(outward_n, reshape(obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(k-1)+l),2,2))' * obj.FourthOrderTensor(elem_plus) * obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(i-1)+j);
+                            c = -1/2 * (obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_plus * (obj.DGnodeM(verts_plus(1),:)'))' * kron(outward_n,obj.I2)' * obj.FourthOrderTensor(elem_minus) * obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(k-1)+l)...
+                                + 1/2 *(obj.I2(:,l) * bary(k) - obj.I2(:,l)*obj.G(k,:)*D_minus * (obj.DGnodeM(verts_minus(1),:)'))' * kron(outward_n,obj.I2)' * obj.FourthOrderTensor(elem_plus) * obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(i-1)+j);
+                            f = obj.linear_line_int(P0,P1,B) + obj.const_line_int(P0,P1,c);
+                            DGK_interface(2*(verts_minus(k)-1)+l,2*(verts_plus(i)-1)+j) = DGK_interface(2*(verts_minus(k)-1)+l,2*(verts_plus(i)-1)+j) + 1/2 * eta_t * f;
+                        
+                            
+                            B = -1/2 * kron(outward_n, reshape(obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(i-1)+j),2,2))' * obj.FourthOrderTensor(elem_plus) * obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(k-1)+l)...
+                                - 1/2 * kron(outward_n, reshape(obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(k-1)+l),2,2))' * obj.FourthOrderTensor(elem_plus) * obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(i-1)+j);
+                            c = -1/2 * (obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_plus * (obj.DGnodeM(verts_plus(1),:)'))' * kron(outward_n,obj.I2)' * obj.FourthOrderTensor(elem_plus) * obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(k-1)+l)...
+                                - 1/2 * (obj.I2(:,l) * bary(k) - obj.I2(:,l)*obj.G(k,:)*D_plus * (obj.DGnodeM(verts_plus(1),:)'))' * kron(outward_n,obj.I2)' * obj.FourthOrderTensor(elem_plus) * obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(i-1)+j);
+                            f = obj.linear_line_int(P0,P1,B) + obj.const_line_int(P0,P1,c);
+                            DGK_interface(2*(verts_plus(k)-1)+l,2*(verts_plus(i)-1)+j) = DGK_interface(2*(verts_plus(k)-1)+l,2*(verts_plus(i)-1)+j) + 1/2 * eta_t * f;
+                        
+                        end
                     end
                 end
             end
