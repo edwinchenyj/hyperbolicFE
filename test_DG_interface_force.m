@@ -44,6 +44,9 @@ obj = elasticDGTriObj(nodeM, elem);
 
 
 obj.SetMaterial( Y, P, rho, 1:size(elem,1), 2); % set the tri to linear
+
+obj.DGIP = true;
+
 Dx = 0*rand(2*N,1); % displacement field. set zero for rest state
 obj.SetCurrentState(Dx);
 %

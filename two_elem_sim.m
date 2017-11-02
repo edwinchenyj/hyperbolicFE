@@ -12,17 +12,23 @@ tsteps = 120*1;
 fs = filesep;
 
 mesh_shape = 'two_elem';
-simulation_type = 'DG';
+simulation_type = 'DGBZ';
 
 % set the DG flag base on simulation type
 switch simulation_type(1:2)
     case 'DG'
         isDG = true;
+        switch simulation_type(3:4)
+            case 'BZ'
+                isIP = false;
+            otherwise
+                isIP = true;
+        end
     otherwise
         isDG = false;
 end
 
-DGeta = 1e2;
+DGeta = 2e2;
 solver = 'IM';
 constraints = 1; % types of constraint
 % 1: free
@@ -34,7 +40,7 @@ P = 0.48; % Poisson ratio
 rho = 1; % density
 a = 0.0; % rayleigh damping
 b = 0.00;
-material = 'linear'; % choice: 'linear', 'neo-hookean'
+material = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
 
 axis_box = [-1 1.5 -0.5 1];
 
@@ -55,6 +61,9 @@ if (exist([dirname fs 'data.mat'], 'file') ~= 2) || rerun_flag
     if isDG
         obj = elasticDGTriObj(nodeM, elem);
         obj.eta = DGeta;
+        if ~isIP
+            obj.DGIP = false;
+        end
     else
         obj = elasticTriObj(nodeM, elem);
     end

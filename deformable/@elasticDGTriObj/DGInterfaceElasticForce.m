@@ -56,6 +56,7 @@ if obj.DGBZ
                         - (b_minus - b_plus)' * (obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_plus * (obj.DGnodeM(verts_plus(1),:)'));
                     f = obj.quadratic_line_int(P0,P1,A) + obj.linear_line_int(P0,P1,B) + obj.const_line_int(P0,P1,c);
                     DGf_k(2*(verts_plus(i)-1)+j) = DGf_k(2*(verts_plus(i)-1)+j) - 1/2 * eta_t * f;
+                    
                     if obj.DGIP
                         
                         % the element corresponding to the inside edge
@@ -64,7 +65,7 @@ if obj.DGBZ
                         c = 1/2 * (obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_minus * (obj.DGnodeM(verts_minus(1),:)'))' * kron(outward_n,obj.I2)' * reshape(obj.Stress(elem_minus) + obj.Stress(elem_plus),[],1)...
                             + 1/2 *((b_minus - b_plus)') * kron(outward_n,obj.I2)' * obj.FourthOrderTensor(elem_minus) * obj.T(4*(elem_minus-1)+1:4*elem_minus,2*(i-1)+j);
                         f = obj.linear_line_int(P0,P1,B) + obj.const_line_int(P0,P1,c);
-                        DGf_k(2*(verts_minus(i)-1)+j) = DGf_k(2*(verts_minus(i)-1)+j) - 1/2 *  eta_t * f;
+                        DGf_k(2*(verts_minus(i)-1)+j) = DGf_k(2*(verts_minus(i)-1)+j) + 1/2 * f;
 
                         % the element corresponding to the outside edge
                         B = -1/2 * kron(outward_n, reshape(obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(i-1)+j),2,2))' * reshape(obj.Stress(elem_minus) + obj.Stress(elem_plus),[],1)...
@@ -72,7 +73,7 @@ if obj.DGBZ
                         c = -1/2 * (obj.I2(:,j) * bary(i) - obj.I2(:,j)*obj.G(i,:)*D_plus * (obj.DGnodeM(verts_plus(1),:)'))' * kron(outward_n,obj.I2)' * reshape(obj.Stress(elem_minus) + obj.Stress(elem_plus),[],1)...
                             + 1/2 *((b_minus - b_plus)') * kron(outward_n,obj.I2)' * obj.FourthOrderTensor(elem_plus) * obj.T(4*(elem_plus-1)+1:4*elem_plus,2*(i-1)+j);
                         f = obj.linear_line_int(P0,P1,B) + obj.const_line_int(P0,P1,c);
-                        DGf_k(2*(verts_plus(i)-1)+j) = DGf_k(2*(verts_plus(i)-1)+j) - 1/2 * eta_t * f;
+                        DGf_k(2*(verts_plus(i)-1)+j) = DGf_k(2*(verts_plus(i)-1)+j) + 1/2 * f;
                         
                     end
                 end

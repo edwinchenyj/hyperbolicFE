@@ -101,5 +101,6 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
             DGK = obj.DGK0;
         end
 end
-assert(max(max(DGK - DGK')) < 1e-6); % stiffness matrix should be symmetric
+nonsym = full(max(max(DGK - DGK')));
+assert(nonsym < 1e-6,sprintf('stiffness matrix should be symmetric. the error is  %d',nonsym)); 
 end
