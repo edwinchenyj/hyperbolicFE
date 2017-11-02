@@ -20,6 +20,12 @@ simulation_type = 'DGBZ';
 switch simulation_type(1:2)
     case 'DG'
         isDG = true;
+        switch simulation_type(3:4)
+            case 'BZ'
+                isIP = false;
+            otherwise
+                isIP = true;
+        end
     otherwise
         isDG = false;
 end
@@ -47,13 +53,19 @@ d_list = zeros(length(DGeta_list),1);
 for i_DGeta = 1:length(DGeta_list)
     DGeta = DGeta_list(i_DGeta);
     % fix the orientation
-    elem(:,[1 3]) = elem(:,[3 1]);
+%     elem(:,[1 3]) = elem(:,[3 1]);
     
     N = size(nodeM,1);
     % construct triangular mesh object
     if isDG
         obj = elasticDGTriObj(nodeM, elem);
         obj.eta = DGeta;
+        switch simulation_type(3:4)
+            case 'BZ'
+                obj.DGIP = false;
+            otherwise
+                obj.DGIP = true;
+        end
     else
         obj = elasticTriObj(nodeM, elem);
     end
@@ -111,8 +123,13 @@ for i_DGeta = 1:length(DGeta_list)
 end
 
 hf = openfig(['result_data' fs 'figure' fs 'two_elem_eig_DG_w_CG_ref']);
-hl = findobj('DisplayName','DGBZ');
+hl = findobj('DisplayName','DGIP');
 hl.YData = real(d_list');
-savefig(hf,['result_data' fs 'figure' fs 'two_elem_eig_DG_w_CG_ref']);
+hl.XData = DGeta_list;
+hl.DisplayName = simulation_type;
+hl = findobj('DisplayName','CG reference');
+hl.XData(1) = min(DGeta_list);
+hl.XData(2) = max(DGeta_list);
+savefig(hf,['result_data' fs 'figure' fs 'two_elem_eig_DGBZ_w_CG_ref']);
 
 end

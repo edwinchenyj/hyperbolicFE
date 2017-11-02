@@ -23,6 +23,11 @@ simulation_type = 'CG';
 NE = 3;
 polyfit_on = true;
 
+if polyfit_on
+video_name = 'CG_polyfit_on_SI.avi';
+else
+video_name = 'CG_polyfit_off_SI.avi';
+end
 % set the DG flag base on simulation type
 switch simulation_type(1:2)
     case 'DG'

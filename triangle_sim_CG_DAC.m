@@ -25,7 +25,7 @@ tsteps = 120*3;
 fs = filesep;
 
 mesh_shape = 'triangle';
-maxA = 0.001;
+maxA = 0.1;
 simulation_type = 'CG';
 
 % number of eigenvalue fitted
@@ -101,10 +101,10 @@ ha = obj.init_vis;
 % deformation for the initial condition
 deformation_mode = zeros(size(obj.X));
 for di = 1:3
-deformation_mode = deformation_mode + V(:,3 + di)/di; % divide the mode by it's mode number to reduce the amplitude of the high modes
+deformation_mode = deformation_mode - V(:,3 + di)/di/2; % divide the mode by it's mode number to reduce the amplitude of the high modes
 end
 
-if maxA == 0.1
+if (maxA == 0.1) || (maxA == 0.001)
     deformation_mode = -deformation_mode;
 end
 

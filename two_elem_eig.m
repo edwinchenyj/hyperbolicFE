@@ -12,7 +12,7 @@ tsteps = 120*1;
 fs = filesep;
 
 mesh_shape = 'two_elem';
-simulation_type = 'DGBZ';
+simulation_type = 'DGIP';
 
 % set the DG flag base on simulation type
 switch simulation_type(1:2)
@@ -40,8 +40,8 @@ nodeM = [0 0; 1 0; 0 1; 1 1]/2;
 %%
 
 
-% fix the orientation
-elem(:,[1 3]) = elem(:,[3 1]);
+% % fix the orientation
+% elem(:,[1 3]) = elem(:,[3 1]);
 
 N = size(nodeM,1);
 % construct triangular mesh object

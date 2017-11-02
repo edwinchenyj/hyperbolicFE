@@ -9,23 +9,29 @@ draw = true;
 % test_mode = true;
 
 dt = 1/120;
-tsteps = 120*5;
+tsteps = 120*10;
 
 fs = filesep;
 
 mesh_shape = 'triangle';
-maxA = 0.1;
+maxA = 0.01;
 simulation_type = 'DGBZ';
 
 % set the DG flag base on simulation type
 switch simulation_type(1:2)
     case 'DG'
         isDG = true;
+        switch simulation_type(3:4)
+            case 'BZ'
+                isIP = false;
+            otherwise
+                isIP = true;
+        end
     otherwise
         isDG = false;
 end
 
-DGeta = 5e0;
+DGeta = 1e0;
 solver = 'SI';
 constraints = 1; % types of constraint
 % 1: free
@@ -66,12 +72,12 @@ options = optimoptions('fsolve','TolFun',1.e-9,'TolX',1.e-9,'Display','final');
 
 
 % fix the orientation
-% fix x y for CG, but probably some other things need to be fixed..
+% % fix x y for CG, but probably some other things need to be fixed..
 if ~isDG
     nodeM(:,[1 2]) = nodeM(:,[2 1]);
 end
-[nodeM, elem] = fixmesh(nodeM, elem);
-elem(:,[1 3]) = elem(:,[3 1]);
+% [nodeM, elem] = fixmesh(nodeM, elem);
+% elem(:,[1 3]) = elem(:,[3 1]);
 
 N = size(nodeM,1);
 
@@ -82,6 +88,9 @@ if (exist([dirname fs 'data.mat'], 'file') ~= 2) || rerun_flag
     if isDG
         obj = elasticDGTriObj(nodeM, elem);
         obj.eta = DGeta;
+        if ~isIP
+            obj.DGIP = false;
+        end
     else
         obj = elasticTriObj(nodeM, elem);
     end
