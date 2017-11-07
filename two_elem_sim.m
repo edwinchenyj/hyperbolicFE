@@ -12,7 +12,7 @@ tsteps = 120*1;
 fs = filesep;
 
 mesh_shape = 'two_elem';
-simulation_type = 'DGIP';
+simulation_type = 'CG';
 
 % set the DG flag base on simulation type
 switch simulation_type(1:2)
@@ -40,7 +40,7 @@ P = 0.48; % Poisson ratio
 rho = 1; % density
 a = 0.0; % rayleigh damping
 b = 0.00;
-material = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
+material = 'linear'; % choice: 'linear', 'neo-hookean'
 
 axis_box = [-1 1.5 -0.5 1];
 
@@ -57,22 +57,14 @@ N = size(nodeM,1);
 dirname = sprintf('sim_data%c%s_%s', fs, material, mesh_shape);
 if (exist([dirname fs 'data.mat'], 'file') ~= 2) || rerun_flag
     
-    % construct triangular mesh object
-    if isDG
-        obj = elasticDGTriObj(nodeM, elem);
-        obj.eta = DGeta;
-        if ~isIP
-            obj.DGIP = false;
-        end
-    else
-        obj = elasticTriObj(nodeM, elem);
-    end
+    % first construct the CG object for eigen decomps
+    obj = elasticTriObj(nodeM, elem);
     switch material
         case 'linear'
-            obj.SetMaterial( Y, P, rho, 1:size(elem,1), 2); % set the tri to linear
+            obj.SetMaterial( Y, P, rho, 2, a, b); % set the tri to linear
             %     obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
         case 'neo-hookean'
-            obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
+            obj.SetMaterial( Y, P, rho, 1, a, b); % set the tri to neo-hookean
     end
     %
     Dx = 0*rand(2*N,1); % displacement field. set zero for rest state
@@ -94,6 +86,23 @@ else
     %     load([filename '.mat'], );
 end
 
+% if it is DG, construct triangular mesh object to overwrite the CG
+% object
+if isDG
+    obj = elasticDGTriObj(nodeM, elem);
+    obj.eta = DGeta;
+    if ~isIP
+        obj.DGIP = false;
+    end
+    switch material
+        case 'linear'
+            obj.SetMaterial( Y, P, rho, 2, a, b); % set the tri to linear
+            %     obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
+        case 'neo-hookean'
+            obj.SetMaterial( Y, P, rho, 1, a, b); % set the tri to neo-hookean
+    end
+end
+
 ha = obj.init_vis;
 
 
@@ -102,19 +111,11 @@ ha = obj.init_vis;
 
 deformation_mode = V(:,3 + deformation_mode_number)/deformation_scale_factor;
 
-% positionsM = node';
-% positionsM = positionsM(:);
-% positions = positionsM;
-% externalGravity  = zeros(size(positions));
-% nFixed = 0;
-% indLogical = true(size(positions));
-
-
 Dx = deformation_mode;
 
 if isDG
-    N = size(obj.DGnodeM,1);
-    node = obj.DGnode;
+    N = obj.N;
+    node = obj.node;
 else
     
     node = obj.node;
@@ -130,14 +131,13 @@ if isDG
     nFixed = 0;
     
     Dx = obj.CGxToDGx(Dx);
-    obj.SetCurrentDGState(Dx);
-    obj.DG_current_vis(obj.vis_handle);
+    obj.SetCurrentState(Dx);
+    obj.simple_vis(obj.vis_handle);
 else
     indLogical = true(size(positions)); % TODO: need to map the indLogical to the indLogical for DG
     nFixed = 0;
     obj.SetCurrentState(Dx);
-    obj.current_vis(obj.vis_handle);
-    
+    obj.simple_vis(obj.vis_handle);    
 end
 
 v = zeros(length(Dx),1);
@@ -170,18 +170,18 @@ for ti = 1:tsteps
     
     switch solver
         case 'IM'
-            u = IM(dt, u, obj);
+            u = ImplicitMid(dt, u, obj);
         case 'SI'
             if isDG
-                K = obj.DGStiffnessMatrix;
-                Mass = obj.DGM;
-                Eforce = obj.DGElasticForce;
+                K = obj.StiffnessMatrix;
+                Mass = obj.M;
+                Eforce = obj.ElasticForce;
             else
                 K = obj.StiffnessMatrix;
                 Mass = obj.M;
                 Eforce = obj.ElasticForce;
             end
-%             K = 1/2 * (K + K');
+            %             K = 1/2 * (K + K');
             
             Mass = Mass(indLogical,indLogical);
             K = K(indLogical,indLogical);
@@ -201,17 +201,17 @@ for ti = 1:tsteps
             
             u(end/2 +1 :end) = u(end/2 +1 :end) + dv_free;
             u(1:end/2) = u(1:end/2) + dt * u(end/2+1:end);
-%             dq_free = u(1:end/2);
-%             v_free = u(end/2+1:end);
-%             u_new = u;
-%             dq_free_new = u_new(1:end/2);
-%             v_free_new = u_new(end/2+1:end);
-%             
-%             positions(indLogical) = positionsM(indLogical) + dq_free + 1/4 * dt * (v_free + v_free_new);
+            %             dq_free = u(1:end/2);
+            %             v_free = u(end/2+1:end);
+            %             u_new = u;
+            %             dq_free_new = u_new(1:end/2);
+            %             v_free_new = u_new(end/2+1:end);
+            %
+            %             positions(indLogical) = positionsM(indLogical) + dq_free + 1/4 * dt * (v_free + v_free_new);
             positions(indLogical) = positionsM(indLogical) +  u(1:end/2);
-
+            
             if isDG
-                obj.SetCurrentDGState(positions - positionsM);
+                obj.SetCurrentState(positions - positionsM);
             else
                 obj.SetCurrentState(positions - positionsM);
                 
@@ -223,9 +223,9 @@ for ti = 1:tsteps
             axis(axis_box)
             cla
             if isDG
-                obj.DG_current_vis(obj.vis_handle);
+                obj.simple_vis(obj.vis_handle);
             else
-                obj.current_vis(obj.vis_handle);
+                obj.simple_vis(obj.vis_handle);
             end
             obj.vis_handle.XLim = xlim;
             obj.vis_handle.YLim = ylim;
@@ -260,10 +260,10 @@ save([simdir fs 'trajectory.mat']);
         
         
         if isDG
-            obj.SetCurrentDGState(positions - positionsM);
-            K_mid = obj.DGStiffnessMatrix;
-            Mass = obj.DGM;
-            Eforce_mid = obj.DGElasticForce;
+            obj.SetCurrentState(positions - positionsM);
+            K_mid = obj.StiffnessMatrix;
+            Mass = obj.M;
+            Eforce_mid = obj.ElasticForce;
         else
             obj.SetCurrentState(positions - positionsM);
             K_mid = obj.StiffnessMatrix;
@@ -298,15 +298,15 @@ save([simdir fs 'trajectory.mat']);
             positions(indLogical) = positionsM(indLogical) + dq_free + 1/4*dt*(v_free + v_free_new);
             
             if isDG
-                obj.SetCurrentDGState(positions - positionsM);
+                obj.SetCurrentState(positions - positionsM);
             else
                 obj.SetCurrentState(positions - positionsM);
             end
             
             if isDG
-                K_mid = obj.DGStiffnessMatrix;
-                Mass = obj.DGM;
-                Eforce_mid = obj.DGElasticForce;
+                K_mid = obj.StiffnessMatrix;
+                Mass = obj.M;
+                Eforce_mid = obj.ElasticForce;
             else
                 K_mid = obj.StiffnessMatrix;
                 Mass = obj.M;

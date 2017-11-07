@@ -14,7 +14,7 @@ tsteps = 120*10;
 fs = filesep;
 
 mesh_shape = 'triangle';
-maxA = 0.01;
+maxA = 0.1;
 simulation_type = 'DGBZ';
 
 % set the DG flag base on simulation type
@@ -31,8 +31,8 @@ switch simulation_type(1:2)
         isDG = false;
 end
 
-DGeta = 1e0;
-solver = 'SI';
+DGeta = 1e2;
+solver = 'SIIMEX';
 constraints = 1; % types of constraint
 % 1: free
 

@@ -51,5 +51,5 @@ for t = 1:obj.NT
 end
 
 % global stiffness matrix
-DGK_k = sparse(obj.DGElement_ii, obj.DGElement_jj, sA, 2*obj.DGN, 2*obj.DGN);
+DGK_k = sparse(obj.DGElement_ii, obj.DGElement_jj, sA, 2*obj.N, 2*obj.N);
 end

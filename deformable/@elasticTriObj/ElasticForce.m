@@ -3,14 +3,14 @@ function f = ElasticForce(obj)
 % can be calculated with current state as the sole input...
 
 f = zeros(2*obj.N,1);
-switch obj.elemMaterialType(1) % TODO: change the material type initialization
+switch obj.material_type % TODO: change the material type initialization
     case 1
         
         for t = 1:obj.NT
             
             f_new = zeros(2*obj.N,1);
             
-            type = obj.elemMaterialType(t);
+            type = obj.material_type;
             tF = obj.F(2*(t-1)+1:2*t,:);
             tFINV = obj.FINV(2*(t-1)+1:2*t,:);
             
@@ -24,7 +24,7 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
                 J = det(tF);
                 P = mu *(tF - tFINV') + lambda * log(J) * tFINV';
             elseif type == 2 % linear elasticity
-                P = mu*(tF + tF' - 2*obj.I2) + lambda*trace(tF - obj.I2)*obj.I2;
+                P = mu*(tF + tF' - 2*obj.Iv) + lambda*trace(tF - obj.Iv)*obj.Iv;
             elseif type == 3
                 E = 1/2 * (F'*F - I);
                 P = F*(2*mu * E + lambda * trace(E) * I);
@@ -45,23 +45,23 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
             
             for t = 1:obj.NT
                 
-                mu = obj.mu(t);
-                lambda = obj.lambda(t);
+                mu = obj.mu;
+                lambda = obj.lambda;
                 tT = obj.T(4*(t-1)+1:4*t,:);
                 W = obj.W(t);
                 tF = obj.F(2*(t-1)+1:2*t,:);
                 tFINV = obj.FINV(2*(t-1)+1:2*t,:);
                 
                 % the fourth order tensor
-                if (obj.elemMaterialType(t) == 1)
+                if (obj.material_type == 1)
                     % for Neo-hookean
-                    C = mu * obj.I4 + mu * obj.K44* kron(tFINV',tFINV)...
-                        - lambda * (log(det(tF))*obj.K44*kron(tFINV',tFINV))...
-                        + lambda*(obj.K44*(tFINV(:)*reshape(transpose(tFINV),1,4)));
-                elseif (obj.elemMaterialType(t) == 2)
+                    C = mu * obj.Im + mu * obj.Kmm* kron(tFINV',tFINV)...
+                        - lambda * (log(det(tF))*obj.Kmm*kron(tFINV',tFINV))...
+                        + lambda*(obj.Kmm*(tFINV(:)*reshape(transpose(tFINV),1,4)));
+                elseif (obj.material_type == 2)
                     % for linear elasticity
-                    C = mu * (obj.I4 + obj.K44) + lambda * (obj.K44 * obj.I2(:)*obj.I2(:)');
-                elseif (obj.elemMaterialType(t) == 3)
+                    C = mu * (obj.Im + obj.Kmm) + lambda * (obj.Kmm * obj.Iv(:)*obj.Iv(:)');
+                elseif (obj.material_type == 3)
                     
                 end
                 %     obj.C = C;
