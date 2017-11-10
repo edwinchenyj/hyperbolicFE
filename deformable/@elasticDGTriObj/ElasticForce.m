@@ -14,8 +14,8 @@ switch obj.material_type
             tF = obj.F(2*(t-1)+1:2*t,:);
             tFINV = obj.FINV(2*(t-1)+1:2*t,:);
             
-            mu = obj.mu(t);
-            lambda = obj.lambda(t);
+            mu = obj.mu;
+            lambda = obj.lambda;
             
             
             

@@ -28,14 +28,14 @@ v_free_new = u_new(end/2+1:end);
 
 % initialize position vectors
 % TODO: this should be move to inside the object
-positionsM = obj.node';
-positionsM = positionsM(:);
-positions = positionsM;
+% positionsM = obj.node';
+% positionsM = positionsM(:);
+% positions = positionsM;
 
-positions(indLogical) = positionsM(indLogical) + dq_free + 1/4 * dt * (v_free + v_free_new);
+obj.x(indLogical) = obj.X(indLogical) + dq_free + 1/4 * dt * (v_free + v_free_new);
 
 % if isDG
-    obj.SetCurrentState(positions - positionsM);
+    obj.SetCurrentState(obj.x - obj.X); % update deformation gradient
     K_mid = obj.StiffnessMatrix;
     Mass = obj.M;
     Eforce_mid = obj.ElasticForce;
@@ -73,7 +73,7 @@ u_new(end/2+1:end) = v_free_new;
 while (Dv'*Dv > 1e-12) && (residual > 1e-12)
     
     v_free_new = u_new(end/2+1:end);
-    positions(indLogical) = positionsM(indLogical) + dq_free + 1/4*dt*(v_free + v_free_new);
+    obj.x(indLogical) = obj.X(indLogical) + dq_free + 1/4*dt*(v_free + v_free_new);
     
 %     if isDG
 %         obj.SetCurrentDGState(positions - positionsM);
@@ -122,9 +122,9 @@ while (Dv'*Dv > 1e-12) && (residual > 1e-12)
         dq_free = u_half(1:end/2);
         
 %         v(indLogical) = v_free;
-        positions(indLogical) = positionsM(indLogical) + dq_free;
+        obj.x(indLogical) = obj.X(indLogical) + dq_free;
         
-        u_half = [positions(indLogical)-positionsM(indLogical); v_free];
+        u_half = [obj.x(indLogical)-obj.X(indLogical); v_free];
         
         if nargin > 3
             u_new = ImplicitMid(dt/2, u_half, obj, varargin);
