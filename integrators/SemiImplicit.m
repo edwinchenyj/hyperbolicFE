@@ -24,19 +24,18 @@ B = -obj.a * Mass - obj.b * K;
 
 Eforce = Eforce(indLogical);
 
-fExternal = Mass * obj.externalGravity;
+fExternal = Mass * obj.externalGravity(indLogical);
 
-
-f = Eforce + fExternal + B*u(end/2 + 1:end);
+v = u(end/2 + 1:end);
+f = Eforce + fExternal + B*v(indLogical);
 
 A = (Mass - dt * B + dt^2 * K);
-v_free = u(end/2 + 1:end);
-rhs = dt * (f - dt * K * v_free);
+rhs = dt * (f - dt * K * v(indLogical));
 dv_free = A\rhs;
 
-u(end/2 +1 :end) = u(end/2 +1 :end) + dv_free;
-u(1:end/2) = u(1:end/2) + dt * u(end/2+1:end);
-obj.x(indLogical) = obj.X(indLogical) +  u(1:end/2);
+v(indLogical) = v(indLogical) + dv_free;
+u(1:end/2) = u(1:end/2) + dt * v;
+obj.x = obj.X +  u(1:end/2);
 
 obj.SetCurrentState(obj.x - obj.X);
 

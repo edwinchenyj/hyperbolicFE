@@ -12,7 +12,7 @@ tsteps = 120*1;
 fs = filesep;
 
 mesh_shape = 'two_elem';
-simulation_type = 'DGIP';
+simulation_type = 'CG';
 
 % set the DG flag base on simulation type
 switch simulation_type(1:2)
@@ -29,18 +29,18 @@ switch simulation_type(1:2)
 end
 
 DGeta = 1e3;
-solver = 'SI';
+solver = 'ERE';
 constraints = 1; % types of constraint
 % 1: free
 deformation_scale_factor = 10;
 deformation_mode_number = 1;
 
 Y = 100; % Young's modululs
-P = 0.48; % Poisson ratio
+P = 0.45; % Poisson ratio
 rho = 1; % density
 a = 0.0; % rayleigh damping
 b = 0.00;
-material = 'linear'; % choice: 'linear', 'neo-hookean'
+material = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
 
 axis_box = [-1 1.5 -0.5 1];
 
@@ -107,7 +107,7 @@ ha = obj.init_vis;
 
 % deformation for the initial condition
 
-deformation_mode = V(:,3 + deformation_mode_number)/deformation_scale_factor;
+deformation_mode = V(:,3 + deformation_mode_number)/3/deformation_scale_factor;
 
 Dx = deformation_mode;
 
@@ -153,6 +153,8 @@ for ti = 1:tsteps
             u = SemiImplicit(dt, u, obj);
         case 'SIIMEX'
             u = SemiImplicit(dt, u, obj);
+        case 'ERE'
+            u = ERE(dt, u, obj);
     end
     if(draw)
         if or(mod(ti, draw_rate) == 1, draw_rate == 1)

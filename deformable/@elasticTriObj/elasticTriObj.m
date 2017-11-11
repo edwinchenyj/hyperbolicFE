@@ -32,7 +32,7 @@ classdef elasticTriObj < elasticObj
     
     properties
         CGTri; % CG triangulation
-        
+        Dim = 2;
     end
     
     methods

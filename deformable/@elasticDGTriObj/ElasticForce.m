@@ -20,17 +20,8 @@ switch obj.material_type
             
             
             
-            if type == 1 % neo-hookean
-                J = det(tF);
-                P = mu *(tF - tFINV') + lambda * log(J) * tFINV';
-            elseif type == 2 % linear elasticity
-                P = mu*(tF + tF' - 2*obj.Iv) + lambda*trace(tF - obj.Iv)*obj.Iv;
-            elseif type == 3
-                E = 1/2 * (F'*F - I);
-                P = F*(2*mu * E + lambda * trace(E) * I);
-            else
-                error('Unexpect error. No material type specified')
-            end
+            J = det(tF);
+            P = mu *(tF - tFINV') + lambda * log(J) * tFINV';
             
             H = -obj.W(t) * P * (obj.DmINV(2*(t-1)+1:2*t,:)');
             i = obj.elem(t, 1); j = obj.elem(t, 2); k = obj.elem(t, 3);
@@ -46,7 +37,7 @@ switch obj.material_type
     case 2
         if isempty(obj.K0)
             index = 1;
-
+            
             for t = 1:obj.NT
                 
                 mu = obj.mu(t);
@@ -57,25 +48,8 @@ switch obj.material_type
                 tFINV = obj.FINV(2*(t-1)+1:2*t,:);
                 
                 % the fourth order tensor
-                if (obj.material_type == 1)
-                    % for Neo-hookean
-                    C = mu * obj.Im + mu * obj.Kmm* kron(tFINV',tFINV)...
-                        - lambda * (log(det(tF))*obj.Kmm*kron(tFINV',tFINV))...
-                        + lambda*(obj.Kmm*(tFINV(:)*reshape(transpose(tFINV),1,4)));
-                elseif (obj.material_type == 2)
-                    % for linear elasticity
-                    C = mu * (obj.Im + obj.Kmm) + lambda * (obj.Kmm * obj.Iv(:)*obj.Iv(:)');
-                elseif (obj.material_type == 3)
-                    
-                end
-                %     obj.C = C;
-                %     disp('dFdx = [')
-                %     disp(tT)
-                %     disp('];')
-                %     obj.dFdx = tT;
-                %     disp('C= [')
-                %     disp(C)
-                %     disp('];')
+                % for linear elasticity
+                C = mu * (obj.Im + obj.Kmm) + lambda * (obj.Kmm * obj.Iv(:)*obj.Iv(:)');
                 
                 
                 % element stiffness matrix
@@ -85,8 +59,6 @@ switch obj.material_type
                 
                 for ti = 1:3
                     for tj = 1:3
-                        %            sA(index:index+3) = Kt(obj.IndK(3*(ti-1) + tj,:));
-                        
                         % same as:
                         sA(index:index+3) = reshape(Kt(2*(ti-1)+1:2*ti,2*(tj-1)+1:2*tj),4,1);
                         index = index + 4;

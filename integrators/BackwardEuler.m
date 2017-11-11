@@ -1,4 +1,4 @@
-function u_new = ImplicitMid( dt, u, obj, varargin)
+function u_new = BackwardEuler( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -25,65 +25,65 @@ v = u(end/2+1:end);
 u_new = u;
 v_new = u_new(end/2+1:end);
 
-obj.x = obj.X + dq + 1/4 * dt * (v + v_new);
+obj.x = obj.X + dq + dt * (v_new);
 
 obj.SetCurrentState(obj.x - obj.X); % update deformation gradient
-K_mid = obj.StiffnessMatrix;
+K_end = obj.StiffnessMatrix;
 Mass = obj.M;
-Eforce_mid = obj.ElasticForce;
+Eforce_end = obj.ElasticForce;
 
 Mass = Mass(indLogical,indLogical);
-K_mid = K_mid(indLogical,indLogical);
-B = -obj.a * Mass - obj.b * K_mid;
+K_end = K_end(indLogical,indLogical);
+B = -obj.a * Mass - obj.b * K_end;
 
-Eforce_mid = Eforce_mid(indLogical);
+Eforce_end = Eforce_end(indLogical);
 
 fExternal = Mass * obj.externalGravity(indLogical);
 
-f_mid = Eforce_mid + fExternal + B*1/2*(v(indLogical) + v_new(indLogical));
+f_mid = Eforce_end + fExternal + B*v_new(indLogical);
 
 N = obj.N;
 nFixed = sum(constraint_indices)/obj.Dim;
 
 residual0 = (dt * (Mass\f_mid))' * (dt * (Mass\f_mid));
-Dv = -(speye(2*(N-nFixed)) + 1/4* dt*dt*(Mass\K_mid) - 1/2 * dt*(Mass\B))\(v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
+Dv = -(speye(2*(N-nFixed)) + dt*dt*(Mass\K_end) - dt*(Mass\B))\(v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
 v_new(indLogical) = v_new(indLogical) + Dv;
 
 residual = (v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid))' * (v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
 
 it = it + 1;
 
-u_new(1:end/2) = dq + 1/2 * dt * (v + v_new);
+u_new(1:end/2) = dq + dt * (v_new);
 u_new(end/2+1:end) = v_new;
 
 while (Dv'*Dv > 1e-12) && (residual > 1e-12)
     
     v_new = u_new(end/2+1:end);
-    obj.x = obj.X + dq + 1/4*dt*(v + v_new);
+    obj.x = obj.X + dq + dt*(v_new);
     
     obj.SetCurrentState(obj.x - obj.X);
-    K_mid = obj.StiffnessMatrix;
+    K_end = obj.StiffnessMatrix;
     Mass = obj.M;
-    Eforce_mid = obj.ElasticForce;
+    Eforce_end = obj.ElasticForce;
     
     Mass = Mass(indLogical,indLogical);
-    K_mid = K_mid(indLogical,indLogical);
+    K_end = K_end(indLogical,indLogical);
     
-    B = -obj.a * Mass - obj.b * K_mid;
+    B = -obj.a * Mass - obj.b * K_end;
     
-    Eforce_mid = Eforce_mid(indLogical);
+    Eforce_end = Eforce_end(indLogical);
     
     fExternal = Mass * obj.externalGravity(indLogical);
     
-    f_mid = Eforce_mid + fExternal + B*1/2*(v(indLogical)+v_new(indLogical));
+    f_mid = Eforce_end + fExternal + B*(v_new(indLogical));
     
-    Dv = -(speye(2*(N-nFixed)) + 1/4* dt*dt*(Mass\K_mid) - 1/2 * dt*(Mass\B))\(v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
+    Dv = -(speye(2*(N-nFixed)) + dt*dt*(Mass\K_end) - dt*(Mass\B))\(v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
     v_new(indLogical) = v_new(indLogical) + Dv;
     
     residual = (v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid))' * (v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
     it = it + 1;
     
-    u_new(1:end/2) = dq + 1/2 * dt * (v + v_new);
+    u_new(1:end/2) = dq + dt * (v_new);
     u_new(end/2+1:end) = v_new;
     
     if (it > 3 && residual > residual0) || it == MaxIT
@@ -101,15 +101,15 @@ while (Dv'*Dv > 1e-12) && (residual > 1e-12)
         u_half = [obj.x-obj.X; v];
         
         if nargin > 3
-            u_new = ImplicitMid(dt/2, u_half, obj, varargin);
+            u_new = BackwardEuler(dt/2, u_half, obj, varargin);
         else
-            u_new = ImplicitMid(dt/2, u_half, obj);
+            u_new = BackwardEuler(dt/2, u_half, obj);
         end
         break;
     end
     
     if it == MaxIT
-        error('Newton iteration not converging in IM')
+        error('Newton iteration not converging in BE')
     end
     
 end

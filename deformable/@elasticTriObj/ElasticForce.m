@@ -3,7 +3,7 @@ function f = ElasticForce(obj)
 % can be calculated with current state as the sole input...
 
 f = zeros(2*obj.N,1);
-switch obj.material_type % TODO: change the material type initialization
+switch obj.material_type
     case 1
         
         for t = 1:obj.NT
@@ -14,8 +14,8 @@ switch obj.material_type % TODO: change the material type initialization
             tF = obj.F(2*(t-1)+1:2*t,:);
             tFINV = obj.FINV(2*(t-1)+1:2*t,:);
             
-            mu = obj.mu(t);
-            lambda = obj.lambda(t);
+            mu = obj.mu;
+            lambda = obj.lambda;
             
             
             
@@ -42,7 +42,7 @@ switch obj.material_type % TODO: change the material type initialization
         end
     case 2
         if isempty(obj.K0)
-            
+            index = 1;
             for t = 1:obj.NT
                 
                 mu = obj.mu;

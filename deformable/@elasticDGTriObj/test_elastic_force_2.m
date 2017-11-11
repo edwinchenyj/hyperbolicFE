@@ -39,13 +39,13 @@ M = size(elem,1);
 %     T = [nodeM(elem(i,:),:), ones(3,1)];
 %     assert(det(T)<0)
 % end
-obj = staticTriMesh(nodeM, elem);
+obj = elasticTriObj(nodeM, elem);
 
 Y = 100; % Young's modululs
 P = 0.4; % Poisson ratio
 rho = 1; % density
 
-obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tets to be neohookean
+obj.SetMaterial( Y, P, rho, 1, 0, 0); % set the tets to be neohookean
 
 % set the initial state as completely undeformed state with zero energy
 Dx = 0*rand(2*N,1); % displacement field
@@ -54,15 +54,15 @@ obj.SetCurrentState(Dx);
 %%
 
 force = obj.ElasticForce;
-ep = 1e-2;
+ep = 1e-8;
 rng('shuffle')
 dx = normc(rand(2*N,1));
 
-
-disp('ElasticForceDifferential')
-tic
-df = obj.ElasticForceDifferential(dx);
-toc
+% 
+% disp('ElasticForceDifferential')
+% tic
+% % df = obj.ElasticForceDifferential(dx);
+% toc
 
 tic
 K = obj.StiffnessMatrix;
@@ -75,8 +75,8 @@ force_new = obj.ElasticForce;
 
 disp('max(df+Kdx)');
 disp(max((force_new-force)/ep+K*dx));
-disp(max((force_new-force)/ep-df));
-disp(max(df+K*dx))
+% disp(max((force_new-force)/ep-df));
+% disp(max(df+K*dx))
 
 size(dx)
 end
