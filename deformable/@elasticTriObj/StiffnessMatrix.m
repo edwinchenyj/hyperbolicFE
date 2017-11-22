@@ -3,39 +3,28 @@ function K = StiffnessMatrix(obj)
 % this can be calculated using current deformation state as the only input
 
 index = 1;
-switch obj.elemMaterialType(1) % TODO: change the material type initialization
+sA = zeros(size(obj.ii));
+switch obj.material_type % TODO: change the material type initialization
     case 1
         
         for t = 1:obj.NT
             
-            mu = obj.mu(t);
-            lambda = obj.lambda(t);
+            mu = obj.mu;
+            lambda = obj.lambda;
             tT = obj.T(4*(t-1)+1:4*t,:);
             W = obj.W(t);
             tF = obj.F(2*(t-1)+1:2*t,:);
             tFINV = obj.FINV(2*(t-1)+1:2*t,:);
             
             % the fourth order tensor
-            if (obj.elemMaterialType(t) == 1)
                 % for Neo-hookean
-                C = mu * obj.I4 + mu * obj.K44* kron(tFINV',tFINV)...
-                    - lambda * (log(det(tF))*obj.K44*kron(tFINV',tFINV))...
-                    + lambda*(obj.K44*(tFINV(:)*reshape(transpose(tFINV),1,4)));
-            elseif (obj.elemMaterialType(t) == 2)
-                % for linear elasticity
-                C = mu * (obj.I4 + obj.K44) + lambda * (obj.K44 * obj.I2(:)*obj.I2(:)');
-            elseif (obj.elemMaterialType(t) == 3)
-                
-            end
-            %     obj.C = C;
-            %     disp('dFdx = [')
-            %     disp(tT)
-            %     disp('];')
-            %     obj.dFdx = tT;
-            %     disp('C= [')
-            %     disp(C)
-            %     disp('];')
-            
+                C = (mu * obj.Im + lambda * reshape(tFINV',[],1)*reshape(tFINV',[],1)' - (lambda * log(det(tF)) - mu) * kron(tFINV,tFINV') * obj.Kmm);
+%                 C = mu * obj.Im + mu * obj.Kmm* kron(tFINV',tFINV)...
+%                     - lambda * (log(det(tF))*obj.Kmm*kron(tFINV',tFINV))...
+%                     + lambda*(obj.Kmm*(tFINV(:)*reshape(transpose(tFINV),1,4)));
+%             C = mu * obj.Im + mu * obj.Kmm* kron(tFINV',tFINV)...
+%                     - lambda * (log(det(tF))*obj.Kmm*kron(tFINV',tFINV))...
+%                     + lambda*(obj.Kmm*(tFINV(:)*reshape(transpose(tFINV),1,4)));
             
             % element stiffness matrix
             
@@ -60,34 +49,16 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
             
             for t = 1:obj.NT
                 
-                mu = obj.mu(t);
-                lambda = obj.lambda(t);
+                mu = obj.mu;
+                lambda = obj.lambda;
                 tT = obj.T(4*(t-1)+1:4*t,:);
                 W = obj.W(t);
                 tF = obj.F(2*(t-1)+1:2*t,:);
                 tFINV = obj.FINV(2*(t-1)+1:2*t,:);
                 
                 % the fourth order tensor
-                if (obj.elemMaterialType(t) == 1)
-                    % for Neo-hookean
-                    C = mu * obj.I4 + mu * obj.K44* kron(tFINV',tFINV)...
-                        - lambda * (log(det(tF))*obj.K44*kron(tFINV',tFINV))...
-                        + lambda*(obj.K44*(tFINV(:)*reshape(transpose(tFINV),1,4)));
-                elseif (obj.elemMaterialType(t) == 2)
                     % for linear elasticity
-                    C = mu * (obj.I4 + obj.K44) + lambda * (obj.K44 * obj.I2(:)*obj.I2(:)');
-                elseif (obj.elemMaterialType(t) == 3)
-                    
-                end
-                %     obj.C = C;
-                %     disp('dFdx = [')
-                %     disp(tT)
-                %     disp('];')
-                %     obj.dFdx = tT;
-                %     disp('C= [')
-                %     disp(C)
-                %     disp('];')
-                
+                    C = mu * (obj.Im + obj.Kmm) + lambda * (obj.Kmm * obj.Iv(:)*obj.Iv(:)');
                 
                 % element stiffness matrix
                 

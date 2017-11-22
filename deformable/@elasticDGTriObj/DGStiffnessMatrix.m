@@ -47,13 +47,13 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
         end
         
         % global stiffness matrix
-        DGK_k = sparse(obj.DGElement_ii, obj.DGElement_jj, sA, 2*obj.DGN, 2*obj.DGN);
+        DGK_k = sparse(obj.DGElement_ii, obj.DGElement_jj, sA, 2*obj.N, 2*obj.N);
         
-        % DGK_interface = sparse(size(obj.DGX,1),size(obj.DGX,1));
+        % DGK_interface = sparse(size(obj.X,1),size(obj.X,1));
         % traverse the interface
         DGK = DGK_k + obj.DGInterfaceStiffnessMatrix;
     case 2
-        if isempty(obj.DGK0)
+        if isempty(obj.K0)
             for t = 1:obj.NT
                 
                 mu = obj.mu(t);
@@ -94,15 +94,15 @@ switch obj.elemMaterialType(1) % TODO: change the material type initialization
             end
             
             % global stiffness matrix
-            DGK_k = sparse(obj.DGElement_ii, obj.DGElement_jj, sA, 2*obj.DGN, 2*obj.DGN);
+            DGK_k = sparse(obj.DGElement_ii, obj.DGElement_jj, sA, 2*obj.N, 2*obj.N);
             
-            % DGK_interface = sparse(size(obj.DGX,1),size(obj.DGX,1));
+            % DGK_interface = sparse(size(obj.X,1),size(obj.X,1));
             % traverse the interface
-            obj.DGK0 = DGK_k + obj.DGInterfaceStiffnessMatrix;
-            DGK = obj.DGK0;
+            obj.K0 = DGK_k + obj.DGInterfaceStiffnessMatrix;
+            DGK = obj.K0;
             
         else
-            DGK = obj.DGK0;
+            DGK = obj.K0;
         end
 end
 nonsym = full(max(max(DGK - DGK')));

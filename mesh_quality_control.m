@@ -6,7 +6,7 @@ regenerate = false;
 fs = filesep;
 
 % type_list = {'triangle' 'circle' 'rectangleCircularHole' 'rect','poly','square' 'ellipse'};
-type_list = {'triangle','circle','rect'};
+type_list = {'triangle','circle','rect','rect_horizontal'};
 
 % edge length list (parameters for distmesh)
 % used to generate meshes from distmesh, which is then passed to
@@ -15,7 +15,8 @@ el_list = [0.1 0.05];
 
 
 % max area list (control parameter in triangle)
-maxA_list = [0.01 0.0005];
+% maxA_list = [0.1 0.01 0.001 0.0005];
+maxA_list = [0.01 0.001];
 % now each area for quality control in triangle corresponds to each edge length from distmesh
 % maxA is the actual knob to control the mesh
 
@@ -46,10 +47,9 @@ for i_type = 1:length(type_list)
             elseif strcmp(type,'rect')
                 pv=[0 0; 3 0; 3 1; 0 1; 0 0]/3;
                 [p,t]=distmesh2d(@dpoly,@huniform,el,boundingBox,pv,pv);
-                %             elseif strcmp(type,'rectLong')
-                %
-                %                 pv=[0 0; 10 0; 10 1; 0 1; 0 0]/10;
-                %                 [p,t]=distmesh2d(@dpoly,@huniform,el,boundingBox,pv,pv);
+            elseif strcmp(type,'rect_horizontal')
+                pv=[0 0; 1 0; 1 3; 0 3; 0 0]/3;
+                [p,t]=distmesh2d(@dpoly,@huniform,el,boundingBox,pv,pv);
             elseif strcmp(type,'circle')
                 fd=@(p) sqrt(sum(p.^2,2))-1/2;
                 [p,t]=distmesh2d(fd,@huniform,el,[-1,-1;1,1],[]);

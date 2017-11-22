@@ -5,23 +5,23 @@ function DGK_k = DGElementStiffnessMatrix(obj)
 index = 1;
 for t = 1:obj.NT
     
-    mu = obj.mu(t);
-    lambda = obj.lambda(t);
+    mu = obj.mu;
+    lambda = obj.lambda;
     tT = obj.T(4*(t-1)+1:4*t,:);
     W = obj.W(t);
     tF = obj.F(2*(t-1)+1:2*t,:);
     tFINV = obj.FINV(2*(t-1)+1:2*t,:);
     
     % the fourth order tensor
-    if (obj.elemMaterialType(t) == 1)
+    if (obj.material_type == 1)
         % for Neo-hookean
-        C = mu * obj.I4 + mu * obj.K44* kron(tFINV',tFINV)...
-            - lambda * (log(det(tF))*obj.K44*kron(tFINV',tFINV))...
-            + lambda*(obj.K44*(tFINV(:)*reshape(transpose(tFINV),1,4)));
-    elseif (obj.elemMaterialType(t) == 2)
+        C = mu * obj.Im + mu * obj.Kmm* kron(tFINV',tFINV)...
+            - lambda * (log(det(tF))*obj.Kmm*kron(tFINV',tFINV))...
+            + lambda*(obj.Kmm*(tFINV(:)*reshape(transpose(tFINV),1,4)));
+    elseif (obj.material_type == 2)
         % for linear elasticity
-        C = mu * (obj.I4 + obj.K44) + lambda * (obj.K44 * obj.I2(:)*obj.I2(:)');
-    elseif (obj.elemMaterialType(t) == 3)
+        C = mu * (obj.Im + obj.Kmm) + lambda * (obj.Kmm * obj.Iv(:)*obj.Iv(:)');
+    elseif (obj.material_type == 3)
         
     end
     %     obj.C = C;
@@ -51,5 +51,5 @@ for t = 1:obj.NT
 end
 
 % global stiffness matrix
-DGK_k = sparse(obj.DGElement_ii, obj.DGElement_jj, sA, 2*obj.DGN, 2*obj.DGN);
+DGK_k = sparse(obj.DGElement_ii, obj.DGElement_jj, sA, 2*obj.N, 2*obj.N);
 end

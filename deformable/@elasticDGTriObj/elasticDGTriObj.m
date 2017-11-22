@@ -1,24 +1,17 @@
-classdef elasticDGTriObj < handle
+classdef elasticDGTriObj < elasticObj
     
     % elasticTriObj An elastic object represented by a triangle mesh
     %   Detailed explanation goes here
     
-    properties
-        
-        % to be removed
-        Dim = 2;
-        dP;
-        dFdx;
-        dF;
-    end
-    
     properties (Constant)
         
+        gravity = [0 -9.81];
+        
         G = [1 0; 0 1; -1 -1];
-        I2 = eye(2);
-        I4 = eye(4);
+        Iv = eye(2);
+        Im = eye(4);
         % commutation matrix
-        K44 = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1];
+        Kmm = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1];
         
         
         IndK = [[1:2, [1:2] + 6]; ...
@@ -38,27 +31,10 @@ classdef elasticDGTriObj < handle
             ]; % fast indexing for the stiffness matrix (for optimizating the speed)
     end
     properties
-        N; % #nodes
-        NT; % #elements
+        Dim = 2;
         
-        node; % nodal position in world (N by 2)
-        nodeM; % nodal position in material (N by 2)
-        elem; % element label (NT by 3): [N1 N2 N3]
-        
-        
-        x; % position vector in world (2N by 1)
-        v; % velocity vector in world (2N by 1)
-        X; % position vector in material, AKA rest pose (2N by 1)
-        
-        Ds; % some type of discrete gradient per element (2NT by 2) storing 2 edges of the elements in world
-        Dm; % some type of discrete gradient per element (2NT by 2) storing 2 edges of the elements in material
-        DmINV; % inverse of Dm (2NT by 2)
-        W; % undeformed volume of each element (NT by 1)
-        T; % mapping vectorized nodal position in a tri to its vectorized deformation gradient (4NT by 6)
-        % definition: vec(F) = T * vec(x), or vec(dF) = T * vec(dx)
-        M % mass matrix
-        K0 =[];
         CGTri; % CG triangulation
+        CGN;
         
         DGN; % #DG nodes (3NT)
         DGnode; % DG nodal position in world (DGN by 2);
@@ -67,6 +43,7 @@ classdef elasticDGTriObj < handle
         DGM; % DG mass matrix
         DGK; % DG stiffnes matrix
         DGK0 = [];
+        DGKi = [];
         MapDGnode; % map from mesh nodal indices to indices in DGnode
         DGTri; % DG triangulation
         
@@ -93,52 +70,9 @@ classdef elasticDGTriObj < handle
         DGElement_ii;
         DGElement_jj;
         
-        ii; % sparse structure
-        jj; % sparse structrue for the stiffness matrix
+        InterfacePhi = [];
+        InterfaceExp = [];
         
-        F; % deformation gradient (2NT by 2) from F*Dm = Ds = xG and F = xG(Dm)^(-1)
-        FINV % inverse of F (2NT by 2)
-        
-        U; % left singular vectors for each tri
-        V; % right singular vectors for each tri
-        S; % principle stretches for each tri (singular values)
-        R; % rotation for each tri
-        
-        % TODO: may want to add J = det(F), or I1, I2, and I3, the
-        % invariances if the deformation gradient tensor
-        C; % green strain
-        normC;
-        
-        f; % elastic force under the current deformation
-        
-        
-        isCorotatedLinear = false;
-        material_type;
-        materialBlock = {}; % A cell array of indice to the elements of the same material type
-        materialType = {}; % A cell array of type of material of each block
-        materialBlockCount = 0; % number of different blocks of material
-        elemMaterialType; % an array containing the material type of each element (NT by 1), 1 = neo-hookean, 2 = linear
-        
-        mu; % An array of mu to the elements
-        lambda; % An array of lambda to the elements
-        rho; % An array of rho to the elements
-        
-        % TODO: need to get rid of this
-        Y;
-        P;
-        Rho;
-        
-        % for ghost sub-points
-        sub_objs;
-        
-        % handle to the axis for visualization
-        vis_handle;
-        
-        % indices for fixed points (for ghost points)
-        ind_fix;
-        ind_apex;
-        ind_apex2;
-        ind_apex3;
     end
     
     methods
@@ -167,32 +101,27 @@ classdef elasticDGTriObj < handle
                 input_elem = varargin{2};
                 assert(size(input_elem,2)== 3);
                 assert(size(input_nodeM,2) == 2);
+                obj.CGN = size(input_nodeM,1); % number of CG nodes
                 
-                obj.N = size(input_nodeM,1);
+
                 obj.NT = size(input_elem,1);
-                obj.elemMaterialType = zeros(obj.NT,1);
-                obj.mu = zeros(obj.NT,1);
-                obj.lambda = zeros(obj.NT,1);
-                obj.rho = zeros(obj.NT,1);
-                
-                obj.nodeM = input_nodeM;
+                obj.N = 3 * obj.NT; % number of DG nodes
                 obj.elem = input_elem;
                 
-                obj.DGelem = zeros(size(obj.elem));
-                obj.DGN = 3 * obj.NT; % #DG nodes (3NT)
-                obj.DGnode = zeros(obj.DGN,2); % DG nodal position in world (DGN by 2);
-                obj.DGnodeM = zeros(obj.DGN,2); % DG nodal position in world (DGN by 2);
+%                 obj.DGelem = zeros(size(input_elem));
+                obj.node = zeros(obj.N,2); % DG nodal position in world (DGN by 2);
+                obj.nodeM = zeros(obj.N,2); % DG nodal position in world (DGN by 2);
                 
                 % initialize the vector to zeros by flatten DGnode
-                obj.DGx = obj.DGnode(:);
-                obj.DGv = obj.DGnode(:);
-                obj.DGX = obj.DGnode(:);
+                obj.x = obj.node(:);
+                obj.v = obj.node(:);
+                obj.X = obj.node(:);
                 
                 % initialize DG to be BZ and IP
                 obj.DGBZ = true;
                 obj.DGIP = true;
                 
-                obj.X = reshape(input_nodeM',2*obj.N,1);
+                CGX = reshape(input_nodeM',2*obj.CGN,1); % rest state X
                 obj.Dm = zeros(2*obj.NT,2);
                 obj.DmINV = zeros(2*obj.NT,2);
                 obj.F = zeros(2*obj.NT,2);
@@ -203,7 +132,7 @@ classdef elasticDGTriObj < handle
                 obj.C = zeros(2*obj.NT,2);
                 obj.normC = zeros(obj.NT,1);
                 obj.M = sparse(size(obj.X,1),size(obj.X,1));
-                obj.DGM = sparse(size(obj.DGX,1),size(obj.DGX,1));
+%                 obj.DGM = sparse(size(obj.DGX,1),size(obj.DGX,1));
                 obj.W = zeros(obj.NT,1);
                 obj.T = zeros(4*obj.NT, 6);
                 obj.HalfEdgeLength = zeros(0,1);
@@ -238,8 +167,8 @@ classdef elasticDGTriObj < handle
                     vol = det(T_node'*obj.G)/2; % undeformed volume from matrix determinant
                     assert(vol > 0, 'need to fix mesh orientation'); % if volume not positive, the input mesh need to be fixed
                     obj.W(i) =  vol;
-                    obj.DGnodeM(3*(i-1)+1:3*i,:) = T_node;
-                    obj.DGelem(i,:) = (3*(i-1)+1:3*i);
+                    obj.nodeM(3*(i-1)+1:3*i,:) = T_node;
+                    obj.elem(i,:) = (3*(i-1)+1:3*i);
                     obj.HalfEdge = [obj.HalfEdge; input_elem(i,1) input_elem(i,2) 0 0; input_elem(i,2) input_elem(i,3) 0 0; input_elem(i,3) input_elem(i,1) 0 0];
                     obj.DGEdge = [obj.DGEdge; 3*(i-1)+1 3*(i-1)+2 0 0; 3*(i-1)+2 3*i 0 0; 3*i 3*(i-1)+1 0 0 ];
                     dE1 = input_nodeM(input_elem(i,2),:)-input_nodeM(input_elem(i,1),:);
@@ -293,41 +222,33 @@ classdef elasticDGTriObj < handle
                     obj.Dm(2*(i-1)+1:2*i,:) = T_node'*obj.G;
                     obj.DmINV(2*(i-1)+1:2*i,:) = inv(T_node'*obj.G);
 
-                    obj.T(4*(i-1)+1:4*i,:) = kron((obj.G * obj.DmINV(2*(i-1)+1:2*i,:))', obj.I2); % definition: vec(F) = T * vec(x), or vec(dF) = T * vec(dx)
+                    obj.T(4*(i-1)+1:4*i,:) = kron((obj.G * obj.DmINV(2*(i-1)+1:2*i,:))', obj.Iv); % definition: vec(F) = T * vec(x), or vec(dF) = T * vec(dx)
                     
                     for ti = 1:3
                         for tj = 1:3
-                            obj.ii(index:index+3) = repmat((2*(obj.elem(i,ti)-1)+1:2*obj.elem(i,ti))',2,1);
-                            obj.jj(index:index+3) = reshape(repmat(2*(obj.elem(i,tj)-1)+1:2*obj.elem(i,tj),2,1),4,1);
-                            obj.DGElement_ii(index:index+3) = repmat((2*(obj.DGelem(i,ti)-1)+1:2*obj.DGelem(i,ti))',2,1);
-                            obj.DGElement_jj(index:index+3) = reshape(repmat(2*(obj.DGelem(i,tj)-1)+1:2*obj.DGelem(i,tj),2,1),4,1);
+                            obj.ii(index:index+3) = repmat((2*(input_elem(i,ti)-1)+1:2*input_elem(i,ti))',2,1);
+                            obj.jj(index:index+3) = reshape(repmat(2*(input_elem(i,tj)-1)+1:2*input_elem(i,tj),2,1),4,1);
+                            obj.DGElement_ii(index:index+3) = repmat((2*(obj.elem(i,ti)-1)+1:2*obj.elem(i,ti))',2,1);
+                            obj.DGElement_jj(index:index+3) = reshape(repmat(2*(obj.elem(i,tj)-1)+1:2*obj.elem(i,tj),2,1),4,1);
                             index = index + 4;
                         end
                     end
                 end
                 
-                %                 for e = 1:size(obj.HalfEdge,1)
-                %                     if obj.HalfEdge(e,3) ~= 0
-                %                         obj.DGInterface =  [obj.DGInterface];
-                %                     end
-                %                 end
-                
-                
-                
-                obj.DGTri = triangulation(obj.DGelem, obj.DGnodeM);
-                obj.DGX = obj.CGxToDGx(obj.X);
+                obj.DGTri = triangulation(obj.elem, obj.nodeM);
+                obj.X = obj.CGxToDGx(CGX);
+                obj.calculateGravity;
             end
             
         end
         
         SetCurrentState(obj, x)
-        SetCurrentDGState(obj, DGx)
         
-        SetMaterial(obj, Y, P, Rho, elem, type)
+        SetMaterial(obj, Y, P, Rho, type, a, b)
         
         function DGx = CGxToDGx(obj,CGx)
-            DGx = zeros(size(obj.DGx));
-            for i = 1:obj.N
+            DGx = zeros(size(obj.x));
+            for i = 1:obj.CGN
                 Nx = CGx(obj.Dim*(i-1)+1:obj.Dim*i);
                 for iDG = obj.MapDGnode{i}
                     DGx(obj.Dim*(iDG-1)+1: obj.Dim*iDG) = Nx;
@@ -335,103 +256,31 @@ classdef elasticDGTriObj < handle
             end
         end
         
-        %         function DGDx = CGDxToDGDx(obj,CGDx)
-        %         end
-        
-        function ha = init_vis(obj,varargin)
+        function simple_vis(obj,ax,varargin)
             switch nargin
                 case 1
-                    ha = axes;
-                    obj.vis_handle = ha;
-                    hold(obj.vis_handle,'on');
-                case 2 % case where the axes is provided
-                    obj.vis_handle = varargin{1};
-                    hold(obj.vis_handle,'on');
-            end
-        end
-        
-        function simple_vis(obj,ax)
-            axes(ax);
-            triplot(obj.elem,obj.nodeM(:,1),obj.nodeM(:,2));
-            obj.vis_handle = ax;
-            %             ha = ax;
-        end
-        function current_vis(obj,ax)
-            axes(ax);
-            triplot(obj.elem,obj.node(:,1),obj.node(:,2));
-            obj.vis_handle = ax;
-            %             ha = ax;
-        end
-        
-        
-        
-        function simple_vis_sub(obj,ax)
-            for t = 1:obj.NT
-                local_elem = obj.sub_objs(t).elem;
-                local_nodeM = obj.sub_objs(t).nodeM;
-                
-                axes(ax);
-                triplot(local_elem,local_nodeM(:,1),local_nodeM(:,2));
-            end
-            
-        end
-        
-        function DG_vis(obj,ax)
-            axes(ax);
-            triplot(obj.DGelem, obj.DGnodeM(:,1),obj.DGnodeM(:,2));
-            obj.vis_handle = ax;
-        end
-        
-        
-        function DG_current_vis(obj,ax,varargin)
-            switch nargin
-                case 1
-                    triplot(obj.DGelem, obj.DGnode(:,1),obj.DGnode(:,2));
+                    triplot(obj.elem, obj.node(:,1),obj.node(:,2));
                 case 2
                     axes(ax);
-                    triplot(obj.DGelem, obj.DGnode(:,1),obj.DGnode(:,2));
+                    triplot(obj.elem, obj.node(:,1),obj.node(:,2));
                     obj.vis_handle = ax;
                 case 3 % case where color is specified
                     color = varargin{1};
                     axes(ax);
-                    hl = triplot(obj.DGelem, obj.DGnode(:,1),obj.DGnode(:,2),'Color',color);
+                    hl = triplot(obj.elem, obj.node(:,1),obj.node(:,2),'Color',color);
                     obj.vis_handle = ax;
                     
             end
+
         end
         
-        
-        
-        function N = GetNNodes(obj)
-            N = obj.N;
-        end
-        
-        function state = GetX(obj)
-            state = obj.x;
-        end
-        
-        function K = restStiffness(obj)
-            assert(isequal(obj.x,obj.X))
-            obj.K0 = obj.StiffnessMatrix;
-            K = obj.K0;
-        end
-        
-        f = subElasticForce(obj)
+        phi = DGEXPINTInterfacePhi(obj,dt);
         
         f = ElasticForce(obj)
         
-        f = DGElasticForce(obj)
         f = DGInterfaceElasticForce(obj);
         
         DGCalculateConst(obj)
-        
-        function out = ElasticForceWFixDx(obj,dx_free)
-            Dx = obj.x - obj.X;
-            Dx(~obj.ind_fix) = dx_free;
-            obj.SetCurrentState(Dx);
-            force = obj.ElasticForce;
-            out = force(~obj.ind_fix);
-        end
         
         df = ElasticForceDifferential(obj, dx)
         
@@ -439,39 +288,16 @@ classdef elasticDGTriObj < handle
         
         K = DGElmentStiffnessMatrix(obj)
         
-        K = DGStiffnessMatrix(obj)
-        
         K = DGInterfaceStiffnessMatrix(obj)
         
         energy = totalEnergy(obj)
         
-        initGhostPoints(obj)
-        
-        function C = greenStrain(obj)
-            for i = 1:obj.NT
-                obj.C(2*(i-1)+1:2*i,:) = 1/2 * (obj.F(2*(i-1)+1:2*i,:)'*obj.F(2*(i-1)+1:2*i,:)-eye(2));
-            end
-            C = obj.C;
-        end
-        
-        function normC = greenStrainNorm(obj)
-            obj.greenStrain;
-            for i = 1:obj.NT
-                obj.normC(i) = norm(obj.C(2*(i-1)+1:2*i,:),'fro');
-            end
-            normC = obj.normC;
-        end
         
         mesh_quality(obj)
-    end
-    
-    
-    methods (Access = private)
+
         P = Stress(obj, t)
         C = FourtOrderTensor(obj, t)
         dP = StressDifferential(obj, t, dF)
-        
-        
     end
     methods (Static)
         test_matrix_free()

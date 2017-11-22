@@ -12,12 +12,18 @@ tsteps = 120*1;
 fs = filesep;
 
 mesh_shape = 'two_elem';
-simulation_type = 'DGIP';
+simulation_type = 'DGBZ';
 
 % set the DG flag base on simulation type
 switch simulation_type(1:2)
     case 'DG'
         isDG = true;
+        switch simulation_type(3:4)
+            case 'BZ'
+                isIP = false;
+            otherwise
+                isIP = true;
+        end
     otherwise
         isDG = false;
 end
@@ -26,9 +32,9 @@ DGeta = 1;
 constraints = 1; % types of constraint
 % 1: free
 
-Y = 100; % Young's modululs
+Y = 100000; % Young's modululs
 P = 0.48; % Poisson ratio
-rho = 1; % density
+rho = 1000; % density
 a = 0.0; % rayleigh damping
 b = 0.00;
 material = 'linear'; % choice: 'linear', 'neo-hookean'
@@ -48,15 +54,18 @@ N = size(nodeM,1);
 if isDG
     obj = elasticDGTriObj(nodeM, elem);
     obj.eta = DGeta;
+    if ~isIP
+        obj.DGIP = false;
+    end
 else
     obj = elasticTriObj(nodeM, elem);
 end
 
 switch material
     case 'linear'
-        obj.SetMaterial( Y, P, rho, 1:size(elem,1), 2); % set the tri to linear
+        obj.SetMaterial( Y, P, rho, 2, a, b); % set the tri to linear
     case 'neo-hookean'
-        obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
+        obj.SetMaterial( Y, P, rho, 1, a, b); % set the tri to neo-hookean
 end
 
 
@@ -82,10 +91,10 @@ if isDG
     nFixed = 0;
     
     Dx = obj.CGxToDGx(Dx);
-    obj.SetCurrentDGState(Dx);
+    obj.SetCurrentState(Dx);
     
-    K = obj.DGStiffnessMatrix;
-    M = obj.DGM;
+    K = obj.StiffnessMatrix;
+    M = obj.M;
 else
     indLogical = true(size(positions)); % TODO: need to map the indLogical to the indLogical for DG
     nFixed = 0;
@@ -106,7 +115,7 @@ display(sort(diag(d)))
 if isDG
     % the eigenvalues of the element part
     K_element = obj.DGElementStiffnessMatrix;
-    M = obj.DGM;
+    M = obj.M;
     [v,d] = eig(full(K_element),full(M));
     %     ind = d > 1e-5;
     %     sort(d(ind))
@@ -116,7 +125,7 @@ if isDG
     
     % the eigenvalues of the glueing part
     K_glue = obj.DGInterfaceStiffnessMatrix;
-    M = obj.DGM;
+    M = obj.M;
     [v,d] = eig(full(K_glue),full(M));
     %     ind = d > 1e-5;
     %     sort(d(ind))

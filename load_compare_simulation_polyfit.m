@@ -3,7 +3,7 @@ function load_compare_simulation_polyfit
 clear all
 close all
 
-video_name = 'CG_polyfit_on_SI.avi';
+video_name = 'CG_polyfit_on_ERE.avi';
 
 fs = filesep;
 
