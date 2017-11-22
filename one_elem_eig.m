@@ -1,4 +1,4 @@
-function two_elem_eig
+function one_elem_eig
 %% set parameters, flags, and meshes
 close all
 
@@ -37,11 +37,11 @@ P = 0.48; % Poisson ratio
 rho = 1000; % density
 a = 0.0; % rayleigh damping
 b = 0.00;
-material = 'linear'; % choice: 'linear', 'neo-hookean'
+material = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
 
 axis_box = [-1 1.5 -0.5 1];
-elem = [1 2 3; 2 4 3];
-nodeM = [0 0; 1 0; 0 1; 1 1]/2;
+elem = [1 2 3];
+nodeM = [0 0; 1 0; 0 1]/2;
 
 %%
 
@@ -72,6 +72,7 @@ end
 % deformation for the initial condition
 
 Dx = zeros(length(obj.X),1);
+Dx = rand(length(obj.X),1);
 
 if isDG
     N = size(obj.DGnodeM,1);
@@ -104,6 +105,8 @@ else
     M = obj.M;
     
 end
+obj.init_vis;
+obj.simple_vis(obj.vis_handle);
 ne = 6;
 % [v,d] = eigs(K,M,ne,'sm');
 [v,d] = eig(full(K),full(M));

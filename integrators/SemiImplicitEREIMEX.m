@@ -1,4 +1,4 @@
-function u_new = SemiImplicit( dt, u, obj, varargin)
+function u_new = SemiImplicitEREIMEX( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -12,10 +12,9 @@ elseif nargin == 4
     constraint_indices = varargin{1};
 end
 
-
 indLogical = ~constraint_indices;
 
-K = obj.StiffnessMatrix;
+K = obj.DGElementStiffnessMatrix;
 Mass = obj.M;
 Eforce = obj.ElasticForce;
 
@@ -25,33 +24,21 @@ B = -obj.a * Mass - obj.b * K;
 
 Eforce = Eforce(indLogical);
 
-fExternal = Mass * obj.externalGravity(indLogical);
+fExternal = Mass * obj.externalGravity;
 
-v = u(end/2 + 1:end);
-f = Eforce + fExternal + B*v(indLogical);
 
-%% version 1
+f = Eforce + fExternal + B*u(end/2 + 1:end);
+
 A = (Mass - dt * B + dt^2 * K);
-rhs = dt * (f - dt * K * v(indLogical));
+v_free = u(end/2 + 1:end);
+rhs = dt * (f - dt * K * v_free);
 dv_free = A\rhs;
 
-v(indLogical) = v(indLogical) + dv_free;
-
-%% version 2
-% A = Mass\(Mass + dt^2 * K);
-% rhs = v + dt * (Mass\f);
-% v = A\rhs;
-
-%% version 3
-% A = Mass\(Mass + dt^2 * K);
-% rhs = Mass\(Mass * v + dt * f);
-% v = A\rhs;
-
-
-u(end/2+1:end) = v;
-u(1:end/2) = u(1:end/2) + dt * v;
-obj.x = obj.X +  u(1:end/2);
+u(end/2 +1 :end) = u(end/2 +1 :end) + dv_free;
+u(1:end/2) = u(1:end/2) + dt * u(end/2+1:end);
+obj.x(indLogical) = obj.X(indLogical) +  u(1:end/2);
 
 obj.SetCurrentState(obj.x - obj.X);
+
 u_new = u;
 end

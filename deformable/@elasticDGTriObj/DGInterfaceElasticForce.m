@@ -3,7 +3,7 @@ function DGf_k = DGInterfaceElasticForce(obj)
 % can be calculated with current state as the sole input...
 
 DGf_k = zeros(2*obj.N,1);
-
+if isempty(obj.DGKi)
 if obj.DGBZ
     % traverse the interface
     for e = 1:size(obj.HalfEdge,1)
@@ -81,5 +81,9 @@ if obj.DGBZ
         end
     end
 end
-
+else
+    if ~obj.DGIP
+        DGf_k = -obj.DGKi * (obj.x - obj.X);
+    end
+end
 end

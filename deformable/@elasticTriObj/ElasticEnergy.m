@@ -1,4 +1,4 @@
-function energy= totalEnergy(obj)
+function energy= ElasticEnergy(obj)
 
 energy  = 0;
 
@@ -8,7 +8,7 @@ for t = 1:obj.NT
     tF = obj.F(2*(t-1)+1:2*t,:);
     mu = obj.mu;
     lambda = obj.lambda;
-    W = obj.W;
+    W = obj.W(t);
     
     if (obj.material_type == 1)
         % for Neo-hookean
@@ -31,9 +31,6 @@ for t = 1:obj.NT
     elastic_energy = elastic_energy + tEnergy;
     
 end
-diagMass = diag(obj.M);
-nodeMass = diagMass(1:2:end);
-% kinetic = 1/2 * nodeMass' * nodeV2;
 
 energy = elastic_energy;
 

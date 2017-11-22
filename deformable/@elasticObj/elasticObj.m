@@ -5,6 +5,8 @@ classdef (Abstract) elasticObj < handle
     
     
     properties
+        is_polyfit = false;
+        is_DAC = false;
         N; % #nodes
         NT; % #elements
         
@@ -68,6 +70,13 @@ classdef (Abstract) elasticObj < handle
         % handle to the axis for visualization
         vis_handle;
         
+        % force approximation for polyfit
+        polyfit_force_approx;
+        % polynomial
+        polyfit_p;
+        % if the simulating start from rest state, not extra computation
+        % needed
+        from_rest = true;
     end
     
     methods (Abstract)
@@ -116,7 +125,7 @@ classdef (Abstract) elasticObj < handle
             % by default the is no gravity. if need to simulate gravity,
             % need to call this function explicitly before hand
             if obj.gravity_on
-                obj.externalGravity = repmat(obj.gravity,obj.N);
+                obj.externalGravity = repmat(obj.gravity,obj.N,1);
             else
                 obj.externalGravity = zeros(size(obj.X,1),1);
             end

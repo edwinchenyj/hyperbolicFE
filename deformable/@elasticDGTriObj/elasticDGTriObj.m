@@ -43,6 +43,7 @@ classdef elasticDGTriObj < elasticObj
         DGM; % DG mass matrix
         DGK; % DG stiffnes matrix
         DGK0 = [];
+        DGKi = [];
         MapDGnode; % map from mesh nodal indices to indices in DGnode
         DGTri; % DG triangulation
         
@@ -68,6 +69,9 @@ classdef elasticDGTriObj < elasticObj
         
         DGElement_ii;
         DGElement_jj;
+        
+        InterfacePhi = [];
+        InterfaceExp = [];
         
     end
     
@@ -269,6 +273,8 @@ classdef elasticDGTriObj < elasticObj
             end
 
         end
+        
+        phi = DGEXPINTInterfacePhi(obj,dt);
         
         f = ElasticForce(obj)
         

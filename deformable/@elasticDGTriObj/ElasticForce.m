@@ -17,9 +17,6 @@ switch obj.material_type
             mu = obj.mu;
             lambda = obj.lambda;
             
-            
-            
-            
             J = det(tF);
             P = mu *(tF - tFINV') + lambda * log(J) * tFINV';
             
@@ -40,8 +37,8 @@ switch obj.material_type
             
             for t = 1:obj.NT
                 
-                mu = obj.mu(t);
-                lambda = obj.lambda(t);
+                mu = obj.mu;
+                lambda = obj.lambda;
                 tT = obj.T(4*(t-1)+1:4*t,:);
                 W = obj.W(t);
                 tF = obj.F(2*(t-1)+1:2*t,:);

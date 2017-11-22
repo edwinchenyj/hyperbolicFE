@@ -12,7 +12,7 @@ tsteps = 120*1;
 fs = filesep;
 
 mesh_shape = 'four_elem_rev';
-simulation_type = 'DGBZ';
+simulation_type = 'CG';
 
 % set the DG flag base on simulation type
 switch simulation_type(1:2)
@@ -23,7 +23,7 @@ switch simulation_type(1:2)
 end
 
 DGeta = 1e2;
-solver = 'IM';
+solver = 'SI';
 constraints = 1; % types of constraint
 % 1: free
 deformation_scale_factor = 10;
@@ -46,7 +46,7 @@ nodeM = [0 0; 1 0; 0 1; 1 1; 2 0; 2 1]/2 ;
 
 
 % fix the orientation
-elem(:,[1 3]) = elem(:,[3 1]);
+% elem(:,[1 3]) = elem(:,[3 1]);
 
 N = size(nodeM,1);
 
@@ -62,10 +62,10 @@ if (exist([dirname fs 'data.mat'], 'file') ~= 2) || rerun_flag
     end
     switch material
         case 'linear'
-            obj.SetMaterial( Y, P, rho, 1:size(elem,1), 2); % set the tri to linear
+            obj.SetMaterial( Y, P, rho, 2, 0, 0); % set the tri to linear
             %     obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
         case 'neo-hookean'
-            obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
+            obj.SetMaterial( Y, P, rho, 1, 0, 0); % set the tri to neo-hookean
     end
     %
     Dx = 0*rand(2*N,1); % displacement field. set zero for rest state
@@ -129,7 +129,7 @@ else
     indLogical = true(size(positions)); % TODO: need to map the indLogical to the indLogical for DG
     nFixed = 0;
     obj.SetCurrentState(Dx);
-    obj.current_vis(obj.vis_handle);
+    obj.simple_vis(obj.vis_handle);
     
 end
 
@@ -216,7 +216,7 @@ for ti = 1:tsteps
             if isDG
                 obj.DG_current_vis(obj.vis_handle);
             else
-                obj.current_vis(obj.vis_handle);
+                obj.simple_vis(obj.vis_handle);
             end
             obj.vis_handle.XLim = xlim;
             obj.vis_handle.YLim = ylim;

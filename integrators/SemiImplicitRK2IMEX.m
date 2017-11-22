@@ -1,4 +1,4 @@
-function u_new = SemiImplicit( dt, u, obj, varargin)
+function u_new = SemiImplicitRK2IMEX( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -12,42 +12,43 @@ elseif nargin == 4
     constraint_indices = varargin{1};
 end
 
-
 indLogical = ~constraint_indices;
 
-K = obj.StiffnessMatrix;
-Mass = obj.M;
-Eforce = obj.ElasticForce;
 
+K = obj.DGElementStiffnessMatrix;
+Mass = obj.M;
+ElemEforce = obj.DGElementElasticForce;
+Ki = obj.DGInterfaceStiffnessMatrix;
 Mass = Mass(indLogical,indLogical);
 K = K(indLogical,indLogical);
-B = -obj.a * Mass - obj.b * K;
+Ki = Ki(indLogical,indLogical);
+B = -obj.a * Mass - obj.b * Ki;
 
-Eforce = Eforce(indLogical);
+ElemEforce = ElemEforce(indLogical);
+
+InterfaceForce = obj.DGInterfaceElasticForce;
+InterfaceForce = InterfaceForce(indLogical);
 
 fExternal = Mass * obj.externalGravity(indLogical);
 
-v = u(end/2 + 1:end);
-f = Eforce + fExternal + B*v(indLogical);
+x = u(1:end/2);
+v = u(end/2+1:end);
+f = ElemEforce + InterfaceForce + fExternal + B*v(indLogical);
 
-%% version 1
+% rk2
+v1 = v(indLogical) +  dt * (Mass\f);
+x1 = x;
+x1(indLogical) = x(indLogical) + dt * v1;
+f1 = ElemEforce -Ki*x1 + fExternal + B*v(indLogical);
+
+
+
 A = (Mass - dt * B + dt^2 * K);
+f = 1/2 * (f + f1);
 rhs = dt * (f - dt * K * v(indLogical));
 dv_free = A\rhs;
 
 v(indLogical) = v(indLogical) + dv_free;
-
-%% version 2
-% A = Mass\(Mass + dt^2 * K);
-% rhs = v + dt * (Mass\f);
-% v = A\rhs;
-
-%% version 3
-% A = Mass\(Mass + dt^2 * K);
-% rhs = Mass\(Mass * v + dt * f);
-% v = A\rhs;
-
-
 u(end/2+1:end) = v;
 u(1:end/2) = u(1:end/2) + dt * v;
 obj.x = obj.X +  u(1:end/2);

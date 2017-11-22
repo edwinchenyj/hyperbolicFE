@@ -1,4 +1,4 @@
-function u_new = SemiImplicit( dt, u, obj, varargin)
+function u_new = SemiImplicitModified( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -30,26 +30,14 @@ fExternal = Mass * obj.externalGravity(indLogical);
 v = u(end/2 + 1:end);
 f = Eforce + fExternal + B*v(indLogical);
 
-%% version 1
-A = (Mass - dt * B + dt^2 * K);
-rhs = dt * (f - dt * K * v(indLogical));
+A = (Mass - dt * B + 0.5*dt^2 * K); % todo: update B
+rhs = dt * (f - 0.5*dt * K * v(indLogical));
 dv_free = A\rhs;
 
+u(1:end/2) = u(1:end/2) + 0.5*dt * v;
 v(indLogical) = v(indLogical) + dv_free;
-
-%% version 2
-% A = Mass\(Mass + dt^2 * K);
-% rhs = v + dt * (Mass\f);
-% v = A\rhs;
-
-%% version 3
-% A = Mass\(Mass + dt^2 * K);
-% rhs = Mass\(Mass * v + dt * f);
-% v = A\rhs;
-
-
 u(end/2+1:end) = v;
-u(1:end/2) = u(1:end/2) + dt * v;
+u(1:end/2) = u(1:end/2) + 0.5*dt * v;
 obj.x = obj.X +  u(1:end/2);
 
 obj.SetCurrentState(obj.x - obj.X);

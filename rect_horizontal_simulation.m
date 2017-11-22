@@ -1,4 +1,4 @@
-function rect_simulation
+function rect_horizontal_simulation
 
 clear all
 close all
@@ -9,12 +9,12 @@ save_state = true;
 draw = true;
 
 dt = 1/120;
-tsteps = 120*3;
+tsteps = 120*2;
 
 fs = filesep;
 
-mesh_shape = 'rect';
-maxA = 0.01;
+mesh_shape = 'rect_horizontal';
+maxA = 0.1;
 simulation_type = 'CG';
 
 % set the DG flag base on simulation type
@@ -35,7 +35,7 @@ end
 DGeta = 1e1;
 solver = 'ERE';
 
-Y = 100000; % Young's modululs
+Y = 1000000; % Young's modululs
 P = 0.48; % Poisson ratio
 rho = 1000; % density
 a = 0.0; % rayleigh damping
@@ -107,9 +107,9 @@ ha = obj.init_vis;
 
 if ~isDG
     indLogical = true(size(obj.X));
-Xind_top = (abs(nodeM(:,2)-max(nodeM(:,2))) < 1e-6);
-nFixed = sum(Xind_top);
-ind_fix = reshape(transpose(repmat(Xind_top,1,2)),[],1); % logical index for total position vector
+Xind_side = (abs(nodeM(:,1)-max(nodeM(:,1))) < 1e-6);
+nFixed = sum(Xind_side);
+ind_fix = reshape(transpose(repmat(Xind_side,1,2)),[],1); % logical index for total position vector
 
 indLogical(ind_fix) = false;
 end

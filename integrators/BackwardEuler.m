@@ -18,6 +18,7 @@ elseif nargin == 5
 end
 
 indLogical = ~constraint_indices;
+Dim = obj.Dim;
 
 it = 0;
 dq = u(1:end/2);
@@ -46,7 +47,7 @@ N = obj.N;
 nFixed = sum(constraint_indices)/obj.Dim;
 
 residual0 = (dt * (Mass\f_mid))' * (dt * (Mass\f_mid));
-Dv = -(speye(2*(N-nFixed)) + dt*dt*(Mass\K_end) - dt*(Mass\B))\(v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
+Dv = -(speye(Dim*(N-nFixed)) + dt*dt*(Mass\K_end) - dt*(Mass\B))\(v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
 v_new(indLogical) = v_new(indLogical) + Dv;
 
 residual = (v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid))' * (v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
@@ -77,7 +78,7 @@ while (Dv'*Dv > 1e-12) && (residual > 1e-12)
     
     f_mid = Eforce_end + fExternal + B*(v_new(indLogical));
     
-    Dv = -(speye(2*(N-nFixed)) + dt*dt*(Mass\K_end) - dt*(Mass\B))\(v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
+    Dv = -(speye(Dim*(N-nFixed)) + dt*dt*(Mass\K_end) - dt*(Mass\B))\(v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
     v_new(indLogical) = v_new(indLogical) + Dv;
     
     residual = (v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid))' * (v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
@@ -89,9 +90,9 @@ while (Dv'*Dv > 1e-12) && (residual > 1e-12)
     if (it > 3 && residual > residual0) || it == MaxIT
         disp('local substep required')
         if nargin > 3
-            u_half = ImplicitMid(dt/2, u, obj, varargin);
+            u_half = BackwardEuler(dt/2, u, obj, varargin);
         else
-            u_half = ImplicitMid(dt/2, u, obj);
+            u_half = BackwardEuler(dt/2, u, obj);
         end
         v = u_half(end/2 + 1:end);
         dq = u_half(1:end/2);

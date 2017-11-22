@@ -1,4 +1,4 @@
-function rect_simulation
+function circle_simulation
 
 clear all
 close all
@@ -9,11 +9,12 @@ save_state = true;
 draw = true;
 
 dt = 1/120;
-tsteps = 120*3;
+tsteps = 120*2;
 
 fs = filesep;
 
-mesh_shape = 'rect';
+mesh_shape = 'circle';
+maxA = 0.01;
 simulation_type = 'CG';
 
 % set the DG flag base on simulation type
@@ -33,22 +34,17 @@ end
 
 DGeta = 1e1;
 solver = 'ERE';
-constraints = 1; % types of constraint
-% 1: free
-deformation_scale_factor = 10;
-deformation_mode_number = 1;
 
-Y = 100; % Young's modululs
+Y = 1000000; % Young's modululs
 P = 0.48; % Poisson ratio
-rho = 1; % density
+rho = 1000; % density
 a = 0.0; % rayleigh damping
 b = 0.00;
-material = 'linear'; % choice: 'linear', 'neo-hookean'
+material = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
 
 
-axis_box = [-0.5 .5 -3 1];
+axis_box = [-0.5 .5 -1.5 1];
 
-maxA = 0.1;
 
 meshname = sprintf('mesh_data%c%s_maxA_%.d',fs,mesh_shape, maxA);
 
@@ -59,7 +55,8 @@ else
     load([meshname '.mat'], 'nodeM', 'elem');
     
 end
-
+nodeM = nodeM(:,[2 1]);
+elem = elem(:,[1 3 2]);
 N = size(nodeM,1);
 
 
@@ -75,6 +72,8 @@ if (exist([dirname fs 'data.mat'], 'file') ~= 2) || rerun_flag
         case 'neo-hookean'
             obj.SetMaterial( Y, P, rho, 1, a, b); % set the tri to neo-hookean
     end
+    obj.gravity_on = true;
+    obj.calculateGravity;
     %
     Dx = 0*rand(2*N,1); % displacement field. set zero for rest state
     obj.SetCurrentState(Dx);
@@ -100,14 +99,17 @@ if isDG
         case 'neo-hookean'
             obj.SetMaterial( Y, P, rho, 1, a, b); % set the tri to neo-hookean
     end
+    obj.gravity_on = true;
+    obj.calculateGravity;
 end
 
 ha = obj.init_vis;
 
 if ~isDG
-Xind_top = (abs(nodeM(:,1)-max(nodeM(:,1))) < 1e-6);
-nFixed = sum(Xind_top);
-ind_fix = reshape(transpose(repmat(Xind_top,1,2)),[],1); % logical index for total position vector
+    indLogical = true(size(obj.X));
+Xind_side = (abs(nodeM(:,1)-max(nodeM(:,1))) < 1e-6);
+nFixed = sum(Xind_side);
+ind_fix = reshape(transpose(repmat(Xind_side,1,2)),[],1); % logical index for total position vector
 
 indLogical(ind_fix) = false;
 end
@@ -155,9 +157,11 @@ for ti = 1:tsteps
         case 'SI'
             u = SemiImplicit(dt, u, obj,~indLogical);
         case 'SIIMEX'
-            u = SemiImplicit(dt, u, obj, ~indLogical);
+            u = SemiImplicitIMEX(dt, u, obj, ~indLogical);
         case 'ERE'
             u = ERE(dt, u, obj, ~indLogical);
+        case 'BE'
+            u = BackwardEuler(dt, u, obj, ~indLogical);
     end
     if(draw)
         if or(mod(ti, draw_rate) == 1, draw_rate == 1)

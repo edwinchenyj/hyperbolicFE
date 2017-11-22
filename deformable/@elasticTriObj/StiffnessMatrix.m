@@ -3,6 +3,7 @@ function K = StiffnessMatrix(obj)
 % this can be calculated using current deformation state as the only input
 
 index = 1;
+sA = zeros(size(obj.ii));
 switch obj.material_type % TODO: change the material type initialization
     case 1
         

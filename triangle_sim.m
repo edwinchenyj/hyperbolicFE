@@ -8,14 +8,14 @@ save_state = true;
 draw = true;
 % test_mode = true;
 
-dt = 1/120;
-tsteps = 120*3;
+dt = 1/100;
+tsteps = 100*3;
 
 fs = filesep;
 
 mesh_shape = 'triangle';
-maxA = 0.1;
-simulation_type = 'CG';
+maxA = 0.01;
+simulation_type = 'DGBZ';
 
 % set the DG flag base on simulation type
 switch simulation_type(1:2)
@@ -31,9 +31,9 @@ switch simulation_type(1:2)
         isDG = false;
 end
 
-DGeta = 1e2;
-solver = 'SI';
-constraints = 1; % types of constraint
+DGeta = 1e8;
+solver = 'SIIMEX';
+% constraints = 1; % types of constraint
 % 1: free
 
 deformation_mode_number = 1;
@@ -45,11 +45,11 @@ switch maxA
     case 0.001
         deformation_scale_factor = -2; % there is a sign change when maxA = 0.01, 0.001
 end
-Y = 10000; % Young's modululs
+Y = 1e5; % Young's modululs
 P = 0.45; % Poisson ratio
-rho = 1; % density
-a = 0.001; % rayleigh damping
-b = 0.0001;
+rho = 1000; % density
+a = 0.000; % rayleigh damping
+b = 0.005;
 material = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
 
 axis_box = [-1 1.5 -0.5 1];
@@ -95,7 +95,7 @@ if (exist([dirname fs 'data.mat'], 'file') ~= 2) || rerun_flag
     [V,D] = eig(full(K),full(M));
     [low_eig, permutation_indices] = sort(diag(D));
     V = -V(:,permutation_indices);
-    firstMode = V(:,4)/2;
+%     firstMode = V(:,4)/2;
     
     mkdir(dirname);
     save([dirname fs 'data.mat'], 'obj','V','D'); % storing eigen decomp
@@ -127,7 +127,7 @@ ha = obj.init_vis;
 
 % deformation for the initial condition
 
-deformation_mode = V(:,3 + deformation_mode_number)/5/deformation_scale_factor;
+deformation_mode = V(:,3 + deformation_mode_number)/10;
 
 Dx = deformation_mode;
 
@@ -145,18 +145,39 @@ xlim = ha.XLim;
 ylim = ha.YLim;
 u = [Dx; v];
 
+constraint = 'none';
+
 if save_state && draw
     if isDG
-        simdir = strcat(dirname,fs,solver,'_',simulation_type,'_Y',num2str(Y),'_P',num2str(P),'_dt',num2str(dt),'_eta',num2str(DGeta));
+        simdir = strcat(dirname,fs,solver,'_',...
+            simulation_type,...
+            '_constraint_',constraint,...
+            '_maxA',num2str(maxA),...
+            '_Y',num2str(Y),...
+            '_P',num2str(P),...
+            '_rho',num2str(rho),...
+            '_a',num2str(a),...
+            '_b',num2str(b),...
+            '_dt',num2str(dt),...
+            '_eta',num2str(DGeta));
     else
-        simdir = strcat(dirname,fs,solver,'_',simulation_type,'_Y',num2str(Y),'_P',num2str(P),'_dt',num2str(dt));
+        simdir = strcat(dirname,fs,solver,'_',simulation_type,...
+            '_constraint_',constraint,...
+            '_maxA',num2str(maxA),...
+            '_Y',num2str(Y),...
+            '_P',num2str(P),...
+            '_rho',num2str(rho),...
+            '_a',num2str(a),...
+            '_b',num2str(b),...
+            '_dt',num2str(dt));
     end
     mkdir(simdir);
     vidname = strcat(simdir,fs,'video.avi');
     vid = VideoWriter(vidname);
-    vid.FrameRate = 60;
+    vid.FrameRate = 50;
     open(vid);
 end
+
 
 % rate to draw the scene
 sim_rate = round(1/dt);
@@ -173,7 +194,13 @@ for ti = 1:tsteps
             u = SemiImplicit(dt, u, obj);
         case 'SIIMEX'
             assert(isDG,'SIIMEX only works for DG in this context');
-            u = SemiImplicit(dt, u, obj);
+            u = SemiImplicitIMEX(dt, u, obj);
+        case 'SIEXPINTIMEX'
+            u = SemiImplicitEXPINTIMEX(dt, u, obj);
+        case 'SIRK4IMEX'
+            u = SemiImplicitRK4IMEX(dt, u, obj);
+        case 'SIRK2IMEX'
+            u = SemiImplicitRK2IMEX(dt, u, obj);
         case 'ERE'
             u = ERE(dt, u, obj);
             

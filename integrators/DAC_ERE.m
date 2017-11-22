@@ -1,4 +1,4 @@
-function u_new = ERE( dt, u, obj, varargin)
+function u_new = DAC_ERE( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -36,9 +36,13 @@ Mass = obj.M;
 Mass = Mass(indLogical,indLogical);
 K = K(indLogical,indLogical);
 
-B = -obj.a * Mass - obj.b * K;
+Minv_K_new = polyvalm([obj.polyfit_p],Mass\K);
+[v_new, d_new] = eig(full(Minv_K_new),full(Mass));
+K = Mass * Minv_K_new;
 
-Eforce = obj.ElasticForce;
+
+B = -obj.a * Mass - obj.b * K;
+Eforce = obj.polyfit_p(1) * obj.ElasticForce;
 Eforce = Eforce(indLogical);
 
 fExternal = Mass * obj.externalGravity(indLogical);
@@ -62,5 +66,7 @@ dq(indLogical) = X(1:(end-1)/2);
 v(indLogical) = X((end-1)/2+1:end-1);
 u_new = [dq; v];
 
+% dq_old = u(1:end/2);
+% obj.polyfit_force_approx = obj.polyfit_force_approx - K * (dq(indLogical)-dq_old(indLogical));
 
 end

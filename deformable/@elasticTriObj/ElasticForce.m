@@ -64,16 +64,6 @@ switch obj.material_type
                 elseif (obj.material_type == 3)
                     
                 end
-                %     obj.C = C;
-                %     disp('dFdx = [')
-                %     disp(tT)
-                %     disp('];')
-                %     obj.dFdx = tT;
-                %     disp('C= [')
-                %     disp(C)
-                %     disp('];')
-                
-                
                 % element stiffness matrix
                 
                 Kt = W * tT'*C*tT;

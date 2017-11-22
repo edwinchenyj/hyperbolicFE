@@ -1,4 +1,4 @@
-function u_new = SemiImplicitIMEX( dt, u, obj, varargin)
+function u_new = SemiImplicitIMEXModified( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -34,24 +34,21 @@ vp = v;
 vp(indLogical) = v(indLogical) + dt * Mass\f(indLogical);
 
 % A = (Mass - dt * B + dt^2 * K);
-A = (Mass + dt^2 * K);
-rhs = dt * (f - dt * K * vp(indLogical));
+% A = (Mass + dt^2 * K);
+% rhs = dt * (f - dt * K * vp(indLogical));
+% dv_free = A\rhs;
+
+% A = (Mass - dt * B + 0.5*dt^2 * K); % todo: update B
+A = (Mass + 0.5*dt^2 * K); % todo: update B
+rhs = dt * (f - 0.5*dt * K * v(indLogical));
 dv_free = A\rhs;
 
-% v_new = v;
-% v_new(indLogical) = v(indLogical) + dv_free;
-% u(end/2+1:end) = v_new;
-% % u(1:end/2) = u(1:end/2) + 1/2 * dt * (v + v_new);
-% u(1:end/2) = u(1:end/2) + dt * v_new;
-% % obj.x = obj.X +  u(1:end/2);
-% obj.x = obj.x + 1/2 * dt * v_new;
-% 
-
-
+u(1:end/2) = u(1:end/2) + 0.5*dt * v;
 v(indLogical) = v(indLogical) + dv_free;
 u(end/2+1:end) = v;
-u(1:end/2) = u(1:end/2) + dt * v;
+u(1:end/2) = u(1:end/2) + 0.5*dt * v;
 obj.x = obj.X +  u(1:end/2);
+
 
 
 obj.SetCurrentState(obj.x - obj.X);

@@ -1,4 +1,4 @@
-function u_new = ERE( dt, u, obj, varargin)
+function u_new = polyfit_ERE( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -19,12 +19,13 @@ end
 
 indLogical = ~constraint_indices;
 
+Dim = obj.Dim;
 
 dq = u(1:end/2);
 v = u(end/2+1:end);
 
 N = obj.N;
-nFixed = sum(constraint_indices)/2;
+nFixed = sum(constraint_indices)/Dim;
 
 obj.x = obj.X + dq;
 
@@ -35,10 +36,19 @@ Mass = obj.M;
 Mass = Mass(indLogical,indLogical);
 K = K(indLogical,indLogical);
 
-B = -obj.a * Mass - obj.b * K;
+Minv_K_new = polyvalm([obj.polyfit_p],Mass\K);
 
 Eforce = obj.ElasticForce;
-Eforce = Eforce(indLogical);
+% A = polyvalm([obj.polyfit_p(1:end-1)],Mass\K);
+% Eforce = (A*Eforce(indLogical));
+Eforce = Mass*Minv_K_new*(K\Eforce(indLogical));
+[v_new, d_new] = eig(full(Minv_K_new),full(Mass));
+K = Mass * Minv_K_new;
+
+
+B = -obj.a * Mass - obj.b * K;
+
+
 
 fExternal = Mass * obj.externalGravity(indLogical);
 
@@ -47,7 +57,7 @@ f = Eforce + fExternal + B*v(indLogical); % from column to row
 
 % ERE
 
-J = [sparse(2*(N-nFixed),2*(N-nFixed)), speye(2*(N-nFixed)); -Mass\K, Mass\B];
+J = [sparse(Dim*(N-nFixed),Dim*(N-nFixed)), speye(Dim*(N-nFixed)); -Mass\K, Mass\B];
 du = [v(indLogical); Mass\f];
 g = du - J * [dq(indLogical); v(indLogical)];
 eta = 2 ^ (-ceil(log2(norm(g,1))));
@@ -58,8 +68,10 @@ u_tilde = [[dq(indLogical); v(indLogical)]; 1/eta];
 X = expv(dt, J_tilde, u_tilde);
 
 dq(indLogical) = X(1:(end-1)/2);
-v(indLogical) = X((end-1)/2+1:end);
-u_new = [;
+v(indLogical) = X((end-1)/2+1:end-1);
+u_new = [dq; v];
 
+% dq_old = u(1:end/2);
+% obj.polyfit_force_approx = obj.polyfit_force_approx - K * (dq(indLogical)-dq_old(indLogical));
 
 end

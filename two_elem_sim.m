@@ -29,7 +29,7 @@ switch simulation_type(1:2)
 end
 
 DGeta = 1e3;
-solver = 'ERE';
+solver = 'SI';
 constraints = 1; % types of constraint
 % 1: free
 deformation_scale_factor = 10;
@@ -40,7 +40,7 @@ P = 0.45; % Poisson ratio
 rho = 1; % density
 a = 0.0; % rayleigh damping
 b = 0.00;
-material = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
+material = 'linear'; % choice: 'linear', 'neo-hookean'
 
 axis_box = [-1 1.5 -0.5 1];
 
@@ -152,7 +152,7 @@ for ti = 1:tsteps
         case 'SI'
             u = SemiImplicit(dt, u, obj);
         case 'SIIMEX'
-            u = SemiImplicit(dt, u, obj);
+            u = SemiImplicitIMEX(dt, u, obj);
         case 'ERE'
             u = ERE(dt, u, obj);
     end
