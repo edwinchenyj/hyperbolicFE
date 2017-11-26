@@ -1,6 +1,6 @@
-function name = polyfit_simulation(varargin)
+function name = polyfit_f_int_simulation(varargin)
 close all
-clf
+
 draw = true;
 rerun_flag = true;
 save_state = true;
@@ -411,7 +411,7 @@ end
 if save_state && draw
     if isDG
         simdir = strcat(dirname,fs,solver,'_',...
-            '_polyfit_',...
+            'polyfit_f_int_',...
             simulation_type,...
             '_constraint_',constraint,...
             '_maxA',num2str(maxA),...
@@ -426,7 +426,7 @@ if save_state && draw
             'polyfit_modes',num2str(polyfit_modes));
     else
         simdir = strcat(dirname,fs,solver,'_',simulation_type,...
-            '_polyfit_',...
+            'polyfit_f_int_',...
             '_constraint_',constraint,...
             '_maxA',num2str(maxA),...
             '_Y',num2str(Y),...
@@ -490,13 +490,13 @@ if (exist([simdir fs 'trajectory.mat'], 'file') ~= 2)
         else
             switch solver
                 case 'IM'
-                    u = polyfit_ImplicitMid(dt, u, obj,~indLogical);
+                    u = polyfit_f_int_ImplicitMid(dt, u, obj,~indLogical);
                 case 'SI'
-                    u = polyfit_SemiImplicit(dt, u, obj,~indLogical);
+                    u = polyfit_f_int_SemiImplicit(dt, u, obj,~indLogical);
                 case 'ERE'
-                    u = polyfit_ERE(dt, u, obj, ~indLogical);
+                    u = polyfit_f_int_ERE(dt, u, obj, ~indLogical);
                 case 'BE'
-                    u = polyfit_BackwardEuler(dt, u, obj, ~indLogical);
+                    u = polyfit_f_int_BackwardEuler(dt, u, obj, ~indLogical);
             end
                             
         end

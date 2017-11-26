@@ -1,4 +1,4 @@
-function u_new = polyfit_ERE( dt, u, obj, varargin)
+function u_new = polyfit_f_int_ERE( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -38,10 +38,10 @@ K = K(indLogical,indLogical);
 
 Minv_K_new = polyvalm([obj.polyfit_p],Mass\K);
 
-Eforce = obj.ElasticForce;
+Eforce = obj.polyfit_force_approx;
 % A = polyvalm([obj.polyfit_p(1:end-1)],Mass\K);
 % Eforce = (A*Eforce(indLogical));
-Eforce = Mass*Minv_K_new*(K\Eforce(indLogical));
+% Eforce = Mass*Minv_K_new*(K\Eforce(indLogical));
 % [v_new, d_new] = eig(full(Minv_K_new),full(Mass));
 K = Mass * Minv_K_new;
 
@@ -71,7 +71,7 @@ dq(indLogical) = X(1:(end-1)/2);
 v(indLogical) = X((end-1)/2+1:end-1);
 u_new = [dq; v];
 
-% dq_old = u(1:end/2);
-% obj.polyfit_force_approx = obj.polyfit_force_approx - K * (dq(indLogical)-dq_old(indLogical));
+dq_old = u(1:end/2);
+obj.polyfit_force_approx = obj.polyfit_force_approx - K * (dq(indLogical)-dq_old(indLogical));
 
 end

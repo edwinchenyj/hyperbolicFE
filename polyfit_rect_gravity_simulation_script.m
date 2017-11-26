@@ -3,22 +3,22 @@ rerun_flag = true;
 save_state = true;
 dt_list = [1/100];
 T_list = [2];
-mesh_shape = 'rect_horizontal';
+mesh_shape = 'rect';
 simulation_type_list = {'CG'};
-solver_list = {'ERE'};
+solver_list = {'IM','ERE'};
 maxA_list = [0.1];
-Y_list = [5e4];
-P_list = [0.45];
+Y_list = [2e5];
+P_list = [0.4];
 rho_list = [1000];
-a_list = [0.0];
-b_list = [0];
-constraint_list = {'top'};
+a_list = [0.01];
+b_list = [0.005];
+constraint_list = {'right'};
 material_list = {'neo-hookean'};
 gravity = 'on';
 DGeta = 1e6;
-axis_box = [-0.5 .5 -3 1];
+axis_box = [-0.5 .5 -2 1];
 deformation_scale = 10;
-polyfit_modes = 2;
+polyfit_modes_list = [1,2];
 is_polyfit = true;
 for i_maxA = 1:length(maxA_list)
     maxA = maxA_list(i_maxA);
@@ -41,9 +41,11 @@ for i_maxA = 1:length(maxA_list)
                                     for i_solver = 1:length(solver_list)
                                         solver = solver_list{i_solver};
                                         for i_material = 1:length(material_list)
-                                            material = material_list{i_material};
+                                            material_type = material_list{i_material};
                                             for i_constraint_list = 1:length(constraint_list)
                                             constraint = constraint_list{i_constraint_list};
+                                            for i_polyfit_modes_list = 1:length(polyfit_modes_list)
+                                            polyfit_modes = polyfit_modes_list(i_polyfit_modes_list);
 %                                              
 %                                             expression = sprintf('simulation(''draw'',%i,''rerun_flag'',%i,''save_state'',%i,''dt'',%f,''T'',%f,''mesh_shape'',''%s'',''maxA'',%f,''simulation_type'',''%s'',''solver'',''%s'',''Y'',%f,''P'',%f,''rho'',%f,''a'',%f,''b'',%f,''material'',''%s'')',...
 %                                                 draw,rerun_flag,save_state,dt,T,mesh_shape,maxA,simulation_type,solver,Y,P,rho,a,b,material);
@@ -62,7 +64,7 @@ polyfit_simulation('draw',draw,...
     'rho',rho,...
     'a',a,...
     'b',b,...
-    'material',material,...
+    'material',material_type,...
     'constraint',constraint,...
     'gravity',gravity,...
     'DGeta',DGeta,...
@@ -71,7 +73,8 @@ polyfit_simulation('draw',draw,...
     'polyfit_modes',polyfit_modes,...
     'is_polyfit',is_polyfit)
 %                                                 draw,rerun_flag,save_state,dt,T,mesh_shape,maxA,simulation_type,solver,Y,P,rho,a,b,material)
-                                        end
+                                            end
+                                            end
                                         end
                                     end
                                 end

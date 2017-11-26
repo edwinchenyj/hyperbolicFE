@@ -1,5 +1,6 @@
 function name = simulation(varargin)
 close all
+clf
 
 draw = true;
 rerun_flag = true;
@@ -24,7 +25,7 @@ P = 0.48; % Poisson ratio
 rho = 1000; % density
 a = 0.0; % rayleigh damping
 b = 0.00;
-material = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
+material_type = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
 
 axis_box = [-0.5 .5 -1.5 1];
 
@@ -84,7 +85,7 @@ while (i_arg <= nargin)
             b = varargin{i_arg};
         case 'material'
             i_arg = i_arg + 1;
-            material = varargin{i_arg};
+            material_type = varargin{i_arg};
         case 'axis_box'
             i_arg = i_arg + 1;
             axis_box = varargin{i_arg};
@@ -136,11 +137,11 @@ end
 N = size(nodeM,1);
 
 
-dirname = sprintf('sim_data%c%s_%s', fs, material, mesh_shape);
+dirname = sprintf('sim_data%c%s_%s', fs, material_type, mesh_shape);
 
 % first construct the CG object for eigen decomps
 obj = elasticTriObj(nodeM, elem);
-switch material
+switch material_type
     case 'linear'
         obj.SetMaterial( Y, P, rho, 2, a, b); % set the tri to linear
         %     obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
@@ -182,7 +183,7 @@ if isDG
     if ~isIP
         obj.DGIP = false;
     end
-    switch material
+    switch material_type
         case 'linear'
             obj.SetMaterial( Y, P, rho, 2, a, b); % set the tri to linear
             %     obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
@@ -243,7 +244,7 @@ obj.simple_vis(obj.vis_handle);
 
 
 v = zeros(length(Dx),1);
-axis(axis_box)
+axis(ha,axis_box)
 axis equal
 xlim = ha.XLim;
 ylim = ha.YLim;
@@ -325,7 +326,7 @@ if (exist([simdir fs 'trajectory.mat'], 'file') ~= 2)
         end
         if(draw)
             if or(mod(ti, draw_rate) == 1, draw_rate == 1)
-                axis(axis_box)
+                axis(ha,axis_box)
                 cla
                 obj.simple_vis(obj.vis_handle);
                 obj.vis_handle.XLim = xlim;
@@ -353,7 +354,7 @@ if (exist([simdir fs 'trajectory.mat'], 'file') ~= 2)
     print([simdir fs 'energy'],'-dpng')
     save([simdir fs 'trajectory.mat']);
 else
-    disp([material simdir fs 'trajectory.mat'])
+    disp([material_type simdir fs 'trajectory.mat'])
     disp('already exist. delete it if you want to re-run')
 end
 

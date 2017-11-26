@@ -1,4 +1,4 @@
-function u_new = ImplicitMid( dt, u, obj, varargin)
+function u_new = polyfit_ImplicitMid( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -30,10 +30,15 @@ obj.x = obj.X + dq + 1/4 * dt * (v + v_new);
 obj.SetCurrentState(obj.x - obj.X); % update deformation gradient
 K_mid = obj.StiffnessMatrix;
 Mass = obj.M;
-Eforce_mid = obj.ElasticForce;
 
 Mass = Mass(indLogical,indLogical);
 K_mid = K_mid(indLogical,indLogical);
+
+Minv_K_new = polyvalm([obj.polyfit_p],Mass\K_mid);
+Eforce_mid = obj.ElasticForce;
+Eforce_mid = Mass*Minv_K_new*(K_mid\Eforce_mid(indLogical));
+K_mid = Mass * Minv_K_new;
+
 B = -obj.a * Mass - obj.b * K_mid;
 
 Eforce_mid = Eforce_mid(indLogical);
@@ -64,10 +69,14 @@ while (Dv'*Dv > 1e-12) && (residual > 1e-12)
     obj.SetCurrentState(obj.x - obj.X);
     K_mid = obj.StiffnessMatrix;
     Mass = obj.M;
-    Eforce_mid = obj.ElasticForce;
     
     Mass = Mass(indLogical,indLogical);
     K_mid = K_mid(indLogical,indLogical);
+    
+    Minv_K_new = polyvalm([obj.polyfit_p],Mass\K_mid);
+    Eforce_mid = obj.ElasticForce;
+    Eforce_mid = Mass*Minv_K_new*(K_mid\Eforce_mid(indLogical));
+    K_mid = Mass * Minv_K_new;
     
     B = -obj.a * Mass - obj.b * K_mid;
     
@@ -89,9 +98,9 @@ while (Dv'*Dv > 1e-12) && (residual > 1e-12)
     if (it > 3 && residual > residual0) || it == MaxIT
         disp('local substep required')
         if nargin > 3
-            u_half = ImplicitMid(dt/2, u, obj, varargin{1});
+            u_half = polyfit_ImplicitMid(dt/2, u, obj, varargin{1});
         else
-            u_half = ImplicitMid(dt/2, u, obj);
+            u_half = polyfit_ImplicitMid(dt/2, u, obj);
         end
         v = u_half(end/2 + 1:end);
         dq = u_half(1:end/2);
@@ -101,9 +110,9 @@ while (Dv'*Dv > 1e-12) && (residual > 1e-12)
         u_half = [obj.x-obj.X; v];
         
         if nargin > 3
-            u_new = ImplicitMid(dt/2, u_half, obj, varargin{1});
+            u_new = polyfit_ImplicitMid(dt/2, u_half, obj, varargin{1});
         else
-            u_new = ImplicitMid(dt/2, u_half, obj);
+            u_new = polyfit_ImplicitMid(dt/2, u_half, obj);
         end
         break;
     end
