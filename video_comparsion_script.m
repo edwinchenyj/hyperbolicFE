@@ -3,7 +3,7 @@ function filename_list=video_comparsion_script
 clear all
 close all
 
-video_name = 'CG_polyfit_1_2_mode_comparison_gravity2_P40.avi';
+video_name = 'CG_polyfit_1_2_mode_comparison_gravity2_P48.avi';
 
 fs = filesep;
 
@@ -16,16 +16,16 @@ rerun_flag = true;
 save_state = true;
 dt = [1/100];
 T = [2];
-mesh_shape = 'rect';
+mesh_shape = 'rect_horizontal';
 simulation_type = 'CG';
 solver = 'IM';
-maxA = [0.001];
-Y = [2e5];
-P = [0.40];
+
+Y = [6e4];
+P = [0.48];
 rho = [1000];
 a = [0.01];
 b = [0.005];
-constraint = 'right';
+constraint = 'top';
 material_type = 'neo-hookean';
 gravity = 'on';
 DGeta = 1e6;
@@ -47,6 +47,7 @@ switch simulation_type(1:2)
         isDG = false;
 end
 
+maxA = [0.001];
 
 dirname = sprintf('sim_data%c%s_%s', fs, material_type, mesh_shape);
 if isDG
@@ -227,7 +228,7 @@ axis_boxes = cell(size(filename_list));
 lowests= cell(size(filename_list));
 
 
-vid = VideoWriter(video_name,'MPEG-4');
+vid = VideoWriter(video_name);
 vid.FrameRate = 50;
 open(vid);
 
