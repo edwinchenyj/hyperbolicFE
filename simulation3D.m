@@ -32,7 +32,10 @@ axis_box = [-0.5 .5 -1.5 1];
 deformation_scale = 10; % scale for the initial deformation
 
 gravity = 'off';
-mode = 1;
+mode = 'n';
+constraint = 'n';
+deformation_scale = 'n';
+DGeta = 'n';
 
 % parse input
 i_arg = 1;
@@ -108,14 +111,26 @@ end
 
 tsteps = T/dt;
 
-meshname = sprintf('mesh_data%c%s_maxA_%.d',fs,mesh_shape, maxA);
-
-if exist([meshname '.mat'], 'file') ~= 2
-    disp('mesh does not exist')
-    
+if strcmp(mesh_shape,'releasing_bar')
+    % if is the releasing bar simulation, need to pre load the simulation state
+    % too
+    load('releasing_small_cuboid','simulation_state');
+    nodeM = simulation.Eobj.nodeM;
+    elem = simulation.Eobj.elem;
+    node = simulation.Eobj.node;
+    x = simulation.Eobj.x;
+    X = simulation.Eobj.X;
 else
-    load([meshname '.mat'], 'nodeM', 'elem');
     
+    meshname = sprintf('mesh_data%c%s_maxA_%.d',fs,mesh_shape, maxA);
+    
+    if exist([meshname '.mat'], 'file') ~= 2
+        disp('mesh does not exist')
+        
+    else
+        load([meshname '.mat'], 'nodeM', 'elem');
+        
+    end
 end
 % nodeM = nodeM(:,[2 1]);
 % elem = elem(:,[1 3 2]);
@@ -125,13 +140,6 @@ N = size(nodeM,1);
 dirname = sprintf('sim_data%c%s_%s', fs, material_type, mesh_shape);
 
 obj = elasticTetObj(nodeM, elem);
-switch material_type
-    case 'linear'
-        obj.SetMaterial( Y, P, rho, 2, a, b); % set the tri to linear
-        %     obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
-    case 'neo-hookean'
-        obj.SetMaterial( Y, P, rho, 1, a, b); % set the tri to neo-hookean
-end
 
 switch gravity
     case 'on'
@@ -139,59 +147,15 @@ switch gravity
         obj.calculateGravity;
 end
 %
+if exist(x)
+Dx = x - X; % displacement field. set zero for rest state
+obj.SetCurrentState(Dx);
+else
 Dx = 0*rand(2*N,1); % displacement field. set zero for rest state
 obj.SetCurrentState(Dx);
-mkdir(dirname);
-
-if (exist([dirname fs 'data.mat'], 'file') ~= 2) || rerun_flag
-    %
-    M = obj.M;
-    K = obj.StiffnessMatrix;
-    %         K = K(~ind_fix,~ind_fix); % extract the non-fixed part
-    
-    [V,D] = eig(full(K),full(M));
-    [low_eig, permutation_indices] = sort(diag(D));
-    V = -V(:,permutation_indices);
-%     firstMode = V(:,4)/2;
-    
-    save([dirname fs 'data.mat'],'V','D'); % storing eigen decomp
-else
-    load([dirname fs 'data.mat'],'V','D');
 end
-
-
+mkdir(dirname);
 ha = obj.init_vis;
-
-    switch constraint
-        case 'right'
-            indLogical = true(size(obj.X));
-            Xind_side = (abs(nodeM(:,1)-max(nodeM(:,1))) < 1e-6);
-            nFixed = sum(Xind_side);
-            ind_fix = reshape(transpose(repmat(Xind_side,1,2)),[],1); % logical index for total position vector
-            
-            indLogical(ind_fix) = false;
-            
-            Dx = zeros(size(obj.X));
-        case 'top'
-            indLogical = true(size(obj.X));
-            Xind_side = (abs(nodeM(:,2)-max(nodeM(:,2))) < 1e-6);
-            nFixed = sum(Xind_side);
-            ind_fix = reshape(transpose(repmat(Xind_side,1,2)),[],1); % logical index for total position vector
-            
-            indLogical(ind_fix) = false;
-            
-            Dx = zeros(size(obj.X));
-        case 'none'
-            indLogical = true(size(obj.X));
-            
-            deformation_mode = V(:,3 + mode)/deformation_scale;
-            
-            Dx = deformation_mode;
-            indLogical = true(size(obj.X));
-    end
-
-
-
 obj.SetCurrentState(Dx);
 obj.simple_vis(obj.vis_handle);
 
@@ -204,20 +168,7 @@ ylim = ha.YLim;
 u = [Dx; v];
 
 if save_state && draw
-    if isDG
-        simdir = strcat(dirname,fs,solver,'_',...
-            simulation_type,...
-            '_constraint_',constraint,...
-            '_maxA',num2str(maxA),...
-            '_Y',num2str(Y),...
-            '_P',num2str(P),...
-            '_rho',num2str(rho),...
-            '_a',num2str(a),...
-            '_b',num2str(b),...
-            '_dt',num2str(dt),...
-            '_eta',num2str(DGeta),...
-            '_def-scl',num2str(deformation_scale));
-    else
+   
         simdir = strcat(dirname,fs,solver,'_',simulation_type,...
             '_constraint_',constraint,...
             '_maxA',num2str(maxA),...
@@ -229,7 +180,6 @@ if save_state && draw
             '_dt',num2str(dt),...
             '_def-scl',num2str(deformation_scale));
         
-    end
     mkdir(simdir);
     vidname = strcat(simdir,fs,'video.avi');
     vid = VideoWriter(vidname);

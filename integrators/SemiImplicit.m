@@ -1,4 +1,4 @@
-function u_new = SemiImplicit( dt, u, obj, varargin)
+function [u_new, residual, step_length] = SemiImplicit( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -27,13 +27,20 @@ Eforce = Eforce(indLogical);
 
 fExternal = Mass * obj.externalGravity(indLogical);
 
-v = u(end/2 + 1:end);
+vold = u(end/2 + 1:end);
+v = vold;
 f = Eforce + fExternal + B*v(indLogical);
 
 %% version 1
 A = (Mass - dt * B + dt^2 * K);
 rhs = dt * (f - dt * K * v(indLogical));
 dv_free = A\rhs;
+
+% 
+% v_new_temp(indLogical) = v(indLogical) + dv_free;
+% 
+% residual = 1/2*(v_new_temp(indLogical) - v(indLogical) - dt * (obj.Minv*f))' * (v_new_temp(indLogical) - v(indLogical) - dt * (obj.Minv*f));
+% step_length = norm(dv_free);
 
 v(indLogical) = v(indLogical) + dv_free;
 
@@ -54,4 +61,12 @@ obj.x = obj.X +  u(1:end/2);
 
 obj.SetCurrentState(obj.x - obj.X);
 u_new = u;
+
+
+Eforce = obj.ElasticForce;
+Eforce = Eforce(indLogical);
+f = Eforce + fExternal + B*v(indLogical);
+residual = norm((v(indLogical) - vold(indLogical) - dt * (Mass\f)));
+step_length = norm(dv_free);
+
 end

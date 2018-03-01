@@ -1,4 +1,4 @@
-function u_new = ERE( dt, u, obj, varargin)
+function [u_new, res, gradient_size] = ERE( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -49,10 +49,11 @@ f = Eforce + fExternal + B*v(indLogical); % from column to row
 % ERE
 
 J = [sparse(Dim*(N-nFixed),Dim*(N-nFixed)), speye(Dim*(N-nFixed)); -Mass\K, Mass\B];
+% J = [sparse(Dim*(N-nFixed),Dim*(N-nFixed)), speye(Dim*(N-nFixed)); -Mass\K, sparse(Dim*(N-nFixed),Dim*(N-nFixed))];
 du = [v(indLogical); Mass\f];
 g = du - J * [dq(indLogical); v(indLogical)];
-eta = 2 ^ (-ceil(log2(norm(g,1))));
-% eta = 1;
+% eta = 2 ^ (-ceil(log2(norm(g,1))));
+eta = 1;
 J_tilde = sparse(size(J,1) + 1, size(J,1) + 1);
 J_tilde(1:end-1,:) = [J, eta*g];
 u_tilde = [[dq(indLogical); v(indLogical)]; 1/eta];
@@ -62,5 +63,7 @@ dq(indLogical) = X(1:(end-1)/2);
 v(indLogical) = X((end-1)/2+1:end-1);
 u_new = [dq; v];
 
+res = 0;
+gradient_size = 0;
 
 end

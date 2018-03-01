@@ -90,7 +90,7 @@ while (Dv'*Dv > 1e-12) && (residual > 1e-12)
     if (it > 3 && residual > residual0) || it == MaxIT
         disp('local substep required')
         if nargin > 3
-            u_half = BackwardEuler(dt/2, u, obj, varargin);
+            u_half = BackwardEuler(dt/2, u, obj, varargin{1});
         else
             u_half = BackwardEuler(dt/2, u, obj);
         end
@@ -102,7 +102,7 @@ while (Dv'*Dv > 1e-12) && (residual > 1e-12)
         u_half = [obj.x-obj.X; v];
         
         if nargin > 3
-            u_new = BackwardEuler(dt/2, u_half, obj, varargin);
+            u_new = BackwardEuler(dt/2, u_half, obj, varargin{1});
         else
             u_new = BackwardEuler(dt/2, u_half, obj);
         end

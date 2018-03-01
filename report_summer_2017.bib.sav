@@ -1,0 +1,107 @@
+% Encoding: UTF-8
+%% This BibTeX bibliography file was created using BibDesk.
+%% http://bibdesk.sourceforge.net/
+
+%% Created for Yu Ju Edwin Chen at 2017-09-13 12:32:49 -0700 
+
+
+%% Saved with string encoding Unicode (UTF-8) 
+
+
+
+@article{kaufmann2009flexible,
+	Author = {Kaufmann, Peter and Martin, Sebastian and Botsch, Mario and Gross, Markus},
+	Date-Added = {2017-09-13 19:32:46 +0000},
+	Date-Modified = {2017-09-13 19:32:46 +0000},
+	Journal = {Graphical Models},
+	Number = {4},
+	Pages = {153--167},
+	Publisher = {Elsevier},
+	Title = {Flexible simulation of deformable models using discontinuous Galerkin FEM},
+	Volume = {71},
+	Year = {2009}}
+
+@article{Ciarlet:1968:NMH:2716620.2716941,
+	Acmid = {2716941},
+	Address = {Secaucus, NJ, USA},
+	Author = {Ciarlet, P. G. and Schultz, M. H. and Varga, R. S.},
+	Date-Added = {2017-09-12 20:45:12 +0000},
+	Date-Modified = {2017-09-12 20:45:12 +0000},
+	Doi = {10.1007/BF02162508},
+	Issn = {0029-599X},
+	Issue_Date = {November 1968},
+	Journal = {Numer. Math.},
+	Month = nov,
+	Number = {4},
+	Numpages = {14},
+	Pages = {266--279},
+	Publisher = {Springer-Verlag New York, Inc.},
+	Title = {Numerical Methods of High-order Accuracy for Nonlinear Boundary Value Problems IV. Periodic Boundary Conditions},
+	Url = {http://dx.doi.org/10.1007/BF02162508},
+	Volume = {12},
+	Year = {1968},
+	Bdsk-Url-1 = {http://dx.doi.org/10.1007/BF02162508}}
+
+@article{Persson:2004aa,
+	Author = {Per-olof Persson and Persson, Per-olof and Strang, Gilbert"},
+	Date-Added = {2017-09-12 20:04:35 +0000},
+	Date-Modified = {2017-09-12 20:04:35 +0000},
+	Doi = {10.1.1.84.7905},
+	Journal = {SIAM REVIEW},
+	Pages = {2004},
+	Title = {A Simple Mesh Generator in MATLAB},
+	Volume = {46},
+	Year = {2004},
+	Bdsk-Url-1 = {http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.84.7905}}
+
+@article{doi:10.1063/1.475324,
+	Author = {Vladimir A. Mandelshtam and Howard S. Taylor},
+	Date-Added = {2017-09-12 18:41:30 +0000},
+	Date-Modified = {2017-09-12 18:41:30 +0000},
+	Doi = {10.1063/1.475324},
+	Eprint = {http://dx.doi.org/10.1063/1.475324},
+	Journal = {The Journal of Chemical Physics},
+	Number = {17},
+	Pages = {6756-6769},
+	Title = {Harmonic inversion of time signals and its applications},
+	Url = {http://dx.doi.org/10.1063/1.475324},
+	Volume = {107},
+	Year = {1997},
+	Bdsk-Url-1 = {http://dx.doi.org/10.1063/1.475324}}
+
+@article{wang2015deformation,
+	Author = {Wang, Bin and Wu, Longhua and Yin, KangKang and Ascher, Uri M and Liu, Libin and Huang, Hui},
+	Date-Added = {2017-09-12 16:38:41 +0000},
+	Date-Modified = {2017-09-12 16:38:41 +0000},
+	Journal = {ACM Trans. Graph.},
+	Number = {4},
+	Pages = {94--1},
+	Title = {Deformation capture and modeling of soft objects.},
+	Volume = {34},
+	Year = {2015}}
+
+@article{Chen:2017:DNC:3072959.3073669,
+	Acmid = {3073669},
+	Address = {New York, NY, USA},
+	Articleno = {84},
+	Author = {Chen, Desai and Levin, David I. W. and Matusik, Wojciech and Kaufman, Danny M.},
+	Date-Added = {2017-09-12 14:58:57 +0000},
+	Date-Modified = {2017-09-12 14:58:57 +0000},
+	Doi = {10.1145/3072959.3073669},
+	Issn = {0730-0301},
+	Issue_Date = {July 2017},
+	Journal = {ACM Trans. Graph.},
+	Keywords = {contact-impact, deformation, dynamics, fabrication, numerical coarsening},
+	Month = jul,
+	Number = {4},
+	Numpages = {15},
+	Pages = {84:1--84:15},
+	Publisher = {ACM},
+	Title = {Dynamics-aware Numerical Coarsening for Fabrication Design},
+	Url = {http://doi.acm.org/10.1145/3072959.3073669},
+	Volume = {36},
+	Year = {2017},
+	Bdsk-Url-1 = {http://doi.acm.org/10.1145/3072959.3073669},
+	Bdsk-Url-2 = {http://dx.doi.org/10.1145/3072959.3073669}}
+
+@Comment{jabref-meta: databaseType:bibtex;}

@@ -18,19 +18,9 @@ switch obj.material_type
             lambda = obj.lambda;
             
             
+            J = det(tF);
+            P = mu *(tF - tFINV') + lambda * log(J) * tFINV';
             
-            
-            if type == 1 % neo-hookean
-                J = det(tF);
-                P = mu *(tF - tFINV') + lambda * log(J) * tFINV';
-            elseif type == 2 % linear elasticity
-                P = mu*(tF + tF' - 2*obj.Iv) + lambda*trace(tF - obj.Iv)*obj.Iv;
-            elseif type == 3
-                E = 1/2 * (F'*F - I);
-                P = F*(2*mu * E + lambda * trace(E) * I);
-            else
-                error('Unexpect error. No material type specified')
-            end
             
             H = -obj.W(t) * P * (obj.DmINV(2*(t-1)+1:2*t,:)');
             i = obj.elem(t, 1); j = obj.elem(t, 2); k = obj.elem(t, 3);
@@ -53,17 +43,8 @@ switch obj.material_type
                 tFINV = obj.FINV(2*(t-1)+1:2*t,:);
                 
                 % the fourth order tensor
-                if (obj.material_type == 1)
-                    % for Neo-hookean
-                    C = mu * obj.Im + mu * obj.Kmm* kron(tFINV',tFINV)...
-                        - lambda * (log(det(tF))*obj.Kmm*kron(tFINV',tFINV))...
-                        + lambda*(obj.Kmm*(tFINV(:)*reshape(transpose(tFINV),1,4)));
-                elseif (obj.material_type == 2)
                     % for linear elasticity
                     C = mu * (obj.Im + obj.Kmm) + lambda * (obj.Kmm * obj.Iv(:)*obj.Iv(:)');
-                elseif (obj.material_type == 3)
-                    
-                end
                 % element stiffness matrix
                 
                 Kt = W * tT'*C*tT;
@@ -84,6 +65,34 @@ switch obj.material_type
             obj.K0 = sparse(obj.ii, obj.jj, sA, 2*obj.N, 2*obj.N);
             
         end
+        
         f = -obj.K0 * (obj.x - obj.X);
+    case 3
+        for t = 1:obj.NT
+            
+            f_new = zeros(2*obj.N,1);
+            
+%             type = obj.material_type;
+            tF = obj.F(2*(t-1)+1:2*t,:);
+%             tFINV = obj.FINV(2*(t-1)+1:2*t,:);
+            
+            mu = obj.mu;
+%             mu = 0;
+            lambda = obj.lambda;
+%             lambda = 0;
+            
+%             E = 1/2 * ((tF')*tF - obj.Iv);
+%             P = 1/2 * (tF + (tF'))*(2*mu * (E') + lambda * trace(E) * obj.Iv);
+            P = (tF)*(mu * ((tF') * tF - obj.Iv)) ...
+                + (tF) * (lambda * trace((1/2) * ((tF') * tF - obj.Iv)) * obj.Iv);
+            
+            H = -obj.W(t) * P * (obj.DmINV(2*(t-1)+1:2*t,:)');
+            i = obj.elem(t, 1); j = obj.elem(t, 2); k = obj.elem(t, 3);
+            
+            f_new(2*(i-1)+1:2*i) = f_new(2*(i-1)+1:2*i)+H(:,1);
+            f_new(2*(j-1)+1:2*j) = f_new(2*(j-1)+1:2*j)+H(:,2);
+            f_new(2*(k-1)+1:2*k) = f_new(2*(k-1)+1:2*k) - H(:,1) - H(:,2);
+            f = f + f_new;
+        end
 end
 end

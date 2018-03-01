@@ -51,7 +51,7 @@ N = obj.N;
 nFixed = sum(constraint_indices)/obj.Dim;
 
 residual0 = (dt * (Mass\f_mid))' * (dt * (Mass\f_mid));
-Dv = -(speye(2*(N-nFixed)) + 1/4* dt*dt*(Mass\K_mid) - 1/2 * dt*(Mass\B))\(v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
+Dv = -(speye(3*(N-nFixed)) + 1/4* dt*dt*(Mass\K_mid) - 1/2 * dt*(Mass\B))\(v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
 v_new(indLogical) = v_new(indLogical) + Dv;
 
 residual = (v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid))' * (v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
@@ -86,7 +86,7 @@ while (Dv'*Dv > 1e-12) && (residual > 1e-12)
     
     f_mid = Eforce_mid + fExternal + B*1/2*(v(indLogical)+v_new(indLogical));
     
-    Dv = -(speye(2*(N-nFixed)) + 1/4* dt*dt*(Mass\K_mid) - 1/2 * dt*(Mass\B))\(v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
+    Dv = -(speye(3*(N-nFixed)) + 1/4* dt*dt*(Mass\K_mid) - 1/2 * dt*(Mass\B))\(v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));
     v_new(indLogical) = v_new(indLogical) + Dv;
     
     residual = (v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid))' * (v_new(indLogical) - v(indLogical) - dt * (Mass\f_mid));

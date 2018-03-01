@@ -2,24 +2,23 @@ draw = true;
 rerun_flag = true;
 save_state = true;
 dt_list = [1/100];
-T_list = [3];
-mesh_shape = 'triangle';
-simulation_type_list = {'DGBZ'};
-solver_list = {'SIEXPINTIMEX'};
-maxA_list = [0.1];
-Y_list = [1e5];
+T_list = [2];
+mesh_shape = 'bunny';
+simulation_type_list = {'CG'};
+solver_list = {'ERE'};
+h_list = [0.5];
+Y_list = [1e4];
 P_list = [0.45];
-rho_list = [100];
-a_list = [1e0];
-b_list = [0.005];
-constraint_list = {'none'};
-material_list = {'neo-hookean'};
-gravity = 'off';
-DGeta = 1e9;
-axis_box = [-0.5 1.5 -0.5 1.5];
-deformation_scale = 10;
-for i_maxA = 1:length(maxA_list)
-    maxA = maxA_list(i_maxA);
+rho_list = [1000];
+a_list = [0];
+b_list = [0.01];
+material_list = {'stvk'};
+gravity = 'on';
+axis_box = [-1 1 -1 1 -1 1]/40;
+reduced_dimension_list = 40;
+
+for i_h = 1:length(h_list)
+    h = h_list(i_h);
     for i_Y = 1:length(Y_list)
         Y = Y_list(i_Y);
         for i_P = 1:length(P_list)
@@ -39,20 +38,20 @@ for i_maxA = 1:length(maxA_list)
                                     for i_solver = 1:length(solver_list)
                                         solver = solver_list{i_solver};
                                         for i_material = 1:length(material_list)
-                                            material = material_list{i_material};
-                                            for i_constraint_list = 1:length(constraint_list)
-                                            constraint = constraint_list{i_constraint_list};
-%                                              
-%                                             expression = sprintf('simulation(''draw'',%i,''rerun_flag'',%i,''save_state'',%i,''dt'',%f,''T'',%f,''mesh_shape'',''%s'',''maxA'',%f,''simulation_type'',''%s'',''solver'',''%s'',''Y'',%f,''P'',%f,''rho'',%f,''a'',%f,''b'',%f,''material'',''%s'')',...
-%                                                 draw,rerun_flag,save_state,dt,T,mesh_shape,maxA,simulation_type,solver,Y,P,rho,a,b,material);
+                                            material_type = material_list{i_material};
+for i_reduced_dimension = 1:length(reduced_dimension_list)
+    reduced_dimension = reduced_dimension_list(i_reduced_dimension);
+                                            %                                              
+%                                             expression = sprintf('simulation(''draw'',%i,''rerun_flag'',%i,''save_state'',%i,''dt'',%f,''T'',%f,''mesh_shape'',''%s'',''h'',%f,''simulation_type'',''%s'',''solver'',''%s'',''Y'',%f,''P'',%f,''rho'',%f,''a'',%f,''b'',%f,''material'',''%s'')',...
+%                                                 draw,rerun_flag,save_state,dt,T,mesh_shape,h,simulation_type,solver,Y,P,rho,a,b,material);
 %                                             eval(expression);
-simulation('draw',draw,...
+simulation3D_reduced_ERE_rescaled_vcoarsebunny('draw',draw,...
     'rerun_flag',rerun_flag,...
     'save_state',save_state,...
     'dt',dt,...
     'T',T,...
     'mesh_shape',mesh_shape,...
-    'maxA',maxA,...
+    'h',h,...
     'simulation_type',simulation_type,...
     'solver',solver,...
     'Y',Y,...
@@ -60,14 +59,12 @@ simulation('draw',draw,...
     'rho',rho,...
     'a',a,...
     'b',b,...
-    'material',material,...
-    'constraint',constraint,...
+    'material',material_type,...
     'gravity',gravity,...
-    'DGeta',DGeta,...
     'axis_box',axis_box,...
-    'deformation_scale',deformation_scale)
-%                                                 draw,rerun_flag,save_state,dt,T,mesh_shape,maxA,simulation_type,solver,Y,P,rho,a,b,material)
-                                        end
+    'reduced_dimension',reduced_dimension)
+%                                                 draw,rerun_flag,save_state,dt,T,mesh_shape,h,simulation_type,solver,Y,P,rho,a,b,material)
+end
                                         end
                                     end
                                 end

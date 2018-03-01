@@ -45,7 +45,10 @@ Y = 100; % Young's modululs
 P = 0.45; % Poisson ratio
 rho = 1; % density
 
-obj.SetMaterial( Y, P, rho, 1, 0, 0); % set the tets to be neohookean
+% obj.SetMaterial( Y, P, rho, 1, 0, 0); % set the tets to be neohookean
+% obj.SetMaterial( Y, P, rho, 2, 0, 0); % set the tets to be linear
+obj.SetMaterial( Y, P, rho, 3, 0, 0); % set the tets to be stvk
+
 
 % set the initial state as completely undeformed state with zero energy
 Dx = 0*rand(2*N,1); % displacement field

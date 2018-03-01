@@ -7,18 +7,18 @@ rerun_flag = true;
 save_state = true;
 
 dt = 1/100;
-T = 2;
+T = 4;
 tsteps = 100*T;
 
 fs = filesep;
 
-mesh_shape = 'circle';
-maxA = 0.01;
+mesh_shape = 'small_bar';
+h = 0.2;
 simulation_type = 'CG';
 
 
 
-solver = 'ERE';
+solver = 'SI';
 
 Y = 100000; % Young's modululs
 P = 0.48; % Poisson ratio
@@ -32,7 +32,10 @@ axis_box = [-0.5 .5 -1.5 1];
 deformation_scale = 10; % scale for the initial deformation
 
 gravity = 'off';
-mode = 1;
+mode = 'n';
+constraint = 'n';
+deformation_scale = 'n';
+DGeta = 'n';
 
 % parse input
 i_arg = 1;
@@ -56,9 +59,9 @@ while (i_arg <= nargin)
         case 'mesh_shape'
             i_arg = i_arg + 1;
             mesh_shape = varargin{i_arg};
-        case 'maxA'
+        case 'h'
             i_arg = i_arg + 1;
-            maxA = varargin{i_arg};
+            h = varargin{i_arg};
         case 'simulation_type'
             i_arg = i_arg + 1;
             simulation_type = varargin{i_arg};
@@ -108,22 +111,8 @@ end
 
 tsteps = T/dt;
 
-% set the DG flag base on simulation type
-switch simulation_type(1:2)
-    case 'DG'
-        isDG = true;
-%         DGeta = 1e1;
-        switch simulation_type(3:4)
-            case 'BZ'
-                isIP = false;
-            otherwise
-                isIP = true;
-        end
-    otherwise
-        isDG = false;
-end
 
-meshname = sprintf('mesh_data%c%s_maxA_%.d',fs,mesh_shape, maxA);
+meshname = sprintf('mesh_data%c%s_h_%.d',fs,mesh_shape, h);
 
 if exist([meshname '.mat'], 'file') ~= 2
     disp('mesh does not exist')
@@ -136,10 +125,77 @@ end
 % elem = elem(:,[1 3 2]);
 N = size(nodeM,1);
 
+loaddir = sprintf('sim_data%csimulation3D_rotate_bar_%s_%s', fs,material_type, mesh_shape);
+simdir = strcat(loaddir,fs,'SI','_','CG',...
+    '_constraint_',constraint,...
+    '_h',num2str(h),...
+    '_Y',num2str(1e5),...
+    '_P',num2str(0.45),...
+    '_rho',num2str(1000),...
+    '_a',num2str(0.01),...
+    '_b',num2str(0.00),...
+    '_dt',num2str(dt),...
+    '_def-scl',num2str(deformation_scale));
+loaded =load([simdir fs 'trajectory.mat'],'obj');
 
-dirname = sprintf('sim_data%c%s_%s', fs, material_type, mesh_shape);
+dirname = sprintf('sim_data%c%s_%s_%s', fs, mfilename,material_type, mesh_shape);
 
-% first construct the CG object for eigen decomps
+mkdir(dirname);
+    simdir = strcat(dirname,fs,solver,'_',simulation_type,...
+        '_constraint_',constraint,...
+        '_h',num2str(h),...
+        '_Y',num2str(Y),...
+        '_P',num2str(P),...
+        '_rho',num2str(rho),...
+        '_a',num2str(a),...
+        '_b',num2str(b),...
+        '_dt',num2str(dt),...
+        '_def-scl',num2str(deformation_scale));
+    
+    mkdir(simdir);
+
+%% set fixed points and points to be rotated
+% fix nFixed number of highest point
+
+[~, ind] = sortrows(nodeM,1);
+
+% put the nodes in order (in z)
+nodeM = nodeM(ind,:);
+
+% create the rank for the original z
+[~,R] = sort(ind);
+% the new element list
+elem = R(elem(:,:));
+
+nodeM = loaded.obj.nodeM;
+elem = loaded.obj.elem;
+
+left_points = find(abs(nodeM(:,1)-0) < 0.01);
+right_points = find(abs(nodeM(:,1)-1/5) < 0.01/5);
+
+%% get logical indices for the left and right nodes
+
+indLeft = left_points;
+indRight = right_points;
+
+nFixed = length(indLeft) + length(indRight);
+
+N = size(nodeM,1); % number of nodes
+indAll = 1:N;
+indRemove = indAll([indRight(:)]);
+indLogical = logical(ones(3,N));
+indLogical(:,indRemove) = logical(0);
+indLogical = indLogical(:);
+
+indLeftLogical = logical(zeros(3,N));
+indLeftLogical(:,indLeft) = logical(1);
+indLeftLogical = indLeftLogical(:);
+
+indRightLogical = logical(zeros(3,N));
+indRightLogical(:,indRight) = logical(1);
+indRightLogical(:);
+
+
 obj = elasticTetObj(nodeM, elem);
 switch material_type
     case 'linear'
@@ -154,131 +210,59 @@ switch gravity
         obj.gravity_on = true;
         obj.calculateGravity;
 end
+
+switch gravity
+    case 'on'
+        obj.gravity_on = true;
+        obj.calculateGravity;
+end
+
+
+
+
 %
-Dx = 0*rand(2*N,1); % displacement field. set zero for rest state
+% Dx = 0*rand(obj.Dim*N,1); % displacement field. set zero for rest state
+Dx = loaded.obj.x - loaded.obj.X;
+save([simdir fs 'deformation.mat'], 'Dx','ind','R'); % storing deformation
 obj.SetCurrentState(Dx);
-mkdir(dirname);
-
-if (exist([dirname fs 'data.mat'], 'file') ~= 2) || rerun_flag
-    %
-    M = obj.M;
-    K = obj.StiffnessMatrix;
-    %         K = K(~ind_fix,~ind_fix); % extract the non-fixed part
-    
-    [V,D] = eig(full(K),full(M));
-    [low_eig, permutation_indices] = sort(diag(D));
-    V = -V(:,permutation_indices);
-%     firstMode = V(:,4)/2;
-    
-    save([dirname fs 'data.mat'],'V','D'); % storing eigen decomp
-else
-    load([dirname fs 'data.mat'],'V','D');
-end
-
-% if it is DG, construct triangular mesh object to overwrite the CG
-% object
-if isDG
-    obj = elasticDGTriObj(nodeM, elem);
-    obj.eta = DGeta;
-    if ~isIP
-        obj.DGIP = false;
-    end
-    switch material_type
-        case 'linear'
-            obj.SetMaterial( Y, P, rho, 2, a, b); % set the tri to linear
-            %     obj.SetMaterial( Y, P, rho, 1:size(elem,1), 1); % set the tri to neo-hookean
-        case 'neo-hookean'
-            obj.SetMaterial( Y, P, rho, 1, a, b); % set the tri to neo-hookean
-    end
-%     obj.gravity_on = true;
-%     obj.calculateGravity;
-end
 
 ha = obj.init_vis;
-
-if ~isDG
-    switch constraint
-        case 'right'
-            indLogical = true(size(obj.X));
-            Xind_side = (abs(nodeM(:,1)-max(nodeM(:,1))) < 1e-6);
-            nFixed = sum(Xind_side);
-            ind_fix = reshape(transpose(repmat(Xind_side,1,2)),[],1); % logical index for total position vector
-            
-            indLogical(ind_fix) = false;
-            
-            Dx = zeros(size(obj.X));
-        case 'top'
-            indLogical = true(size(obj.X));
-            Xind_side = (abs(nodeM(:,2)-max(nodeM(:,2))) < 1e-6);
-            nFixed = sum(Xind_side);
-            ind_fix = reshape(transpose(repmat(Xind_side,1,2)),[],1); % logical index for total position vector
-            
-            indLogical(ind_fix) = false;
-            
-            Dx = zeros(size(obj.X));
-        case 'none'
-            indLogical = true(size(obj.X));
-            
-            deformation_mode = V(:,3 + mode)/deformation_scale;
-            
-            Dx = deformation_mode;
-            indLogical = true(size(obj.X));
-    end
-
-else
-    %     indLogical = logical(obj.CGxToDGx(indLogical));
-    switch constraint
-        case 'none'
-            indLogical = true(size(obj.X));
-            
-            deformation_mode = V(:,3 + mode)/deformation_scale;
-            
-            Dx = deformation_mode;
-%             indLogical = true(size(obj.X));
-    end
-        Dx = obj.CGxToDGx(Dx);
-end
-
-obj.SetCurrentState(Dx);
 obj.simple_vis(obj.vis_handle);
-
 
 v = zeros(length(Dx),1);
 axis(ha,axis_box)
 axis equal
-xlim = ha.XLim;
-ylim = ha.YLim;
+% xlim = ha.XLim;
+% ylim = ha.YLim;
+xlim = axis_box(1:2);
+ylim = axis_box(3:4);
+zlim = axis_box(5:6);
 u = [Dx; v];
+obj.vis_handle.XLim = xlim;
+obj.vis_handle.YLim = ylim;
+obj.vis_handle.ZLim = zlim;
+camP = campos(gca);
+camV = camva(gca);
+
+fig = gcf;
+
+fig.Children.Visible = 'off';
+fig.Children.Clipping = 'off';
+fig.Children.Projection = 'perspective';
+fig.Position(3:4) = fig.Position(3:4) *2;
+skymap = colormap(gray/4+0.3); %We'll use the colormap "winter" which is defined by matlab.
+
+% Here's a gradient I made up that's a bit more horizon-like. You can
+% experiment.
+% flipud([logspace(-0.5,0,1000)',logspace(-0.5,0,1000)',logspace(-0.001,0,1000)']);
+
+[skyX,skyY,skyZ] = sphere(200); %create the surface data for a sphere.
+% sky = surf(500000*skyX,500000*skyY,500000*skyZ,'LineStyle','none','FaceColor','interp'); %Make a sphere object.
 
 if save_state && draw
-    if isDG
-        simdir = strcat(dirname,fs,solver,'_',...
-            simulation_type,...
-            '_constraint_',constraint,...
-            '_maxA',num2str(maxA),...
-            '_Y',num2str(Y),...
-            '_P',num2str(P),...
-            '_rho',num2str(rho),...
-            '_a',num2str(a),...
-            '_b',num2str(b),...
-            '_dt',num2str(dt),...
-            '_eta',num2str(DGeta),...
-            '_def-scl',num2str(deformation_scale));
-    else
-        simdir = strcat(dirname,fs,solver,'_',simulation_type,...
-            '_constraint_',constraint,...
-            '_maxA',num2str(maxA),...
-            '_Y',num2str(Y),...
-            '_P',num2str(P),...
-            '_rho',num2str(rho),...
-            '_a',num2str(a),...
-            '_b',num2str(b),...
-            '_dt',num2str(dt),...
-            '_def-scl',num2str(deformation_scale));
-        
-    end
-    mkdir(simdir);
+    
     vidname = strcat(simdir,fs,'video.avi');
+%     vid = VideoWriter(vidname,'Uncompressed AVI');
     vid = VideoWriter(vidname);
     vid.FrameRate = 50;
     open(vid);
@@ -292,11 +276,12 @@ gravitational_potential = zeros(1,tsteps);
 sim_rate = round(1/dt);
 draw_rate = round(sim_rate/vid.FrameRate);
 
+patch_color = [0.8,0.9,0.5];
 if (exist([simdir fs 'trajectory.mat'], 'file') ~= 2)
     trajectory = zeros(size(u,1),tsteps);
     for ti = 1:tsteps
         trajectory(:,ti) = u;
-        elastic_energy(ti) = obj.ElasticEnergy;
+        %         elastic_energy(ti) = obj.ElasticEnergy;
         
         switch solver
             case 'IM'
@@ -324,15 +309,67 @@ if (exist([simdir fs 'trajectory.mat'], 'file') ~= 2)
             case 'BEIMEX'
                 u = BEIMEX(dt, u, obj, ~indLogical);
         end
+        
+
         if(draw)
             if or(mod(ti, draw_rate) == 1, draw_rate == 1)
                 axis(ha,axis_box)
                 cla
-                obj.simple_vis(obj.vis_handle);
+                
+                
+                obj.simple_vis(obj.vis_handle,patch_color);
                 obj.vis_handle.XLim = xlim;
                 obj.vis_handle.YLim = ylim;
+                obj.vis_handle.ZLim = zlim;
+                
+                ah = gca;
+                ph = ah.Children;
+                ph.FaceLighting = 'flat';
+                %                 ph.EdgeLighting = 'gouraud';
+                %                 ph.BackFaceLighting = 'lit';
+                lighting flat
+                material metal
+                %                 ph.EdgeColor = [0.9 0.9 1];
+                lh = camlight('headlight');
+                lh.Style = 'local';
+                %                 lh2 = camlight('headlight');
+                %                 lh.Position(2) = 3;
+                %                 lh.Position(3) = 3;
+                map = [0.8 0.9 1];
+                %                 colormap(autumn);
+                
+                shading interp
+                %                 ph.EdgeColor = [0.1 0.1 0.1];
+                ph.EdgeLighting = 'none';
+                ph.EdgeAlpha = 0;
+                %                 ph.LineWidth = 0.25;
+                %                 ph.AlignVertexCenters = 'on';
+                whitebg('white')
+                
+                %                 origPos = [0,0,0]';
+                % %                 campos(origPos);
+                %                 origTarget = [0,0,-10000];
+                %                 camtarget(origTarget);
+                %                 camva(40)
+                
+                fig.Children.Visible = 'off';
+                fig.Children.Clipping = 'off';
+                fig.Children.Projection = 'perspective';
+                campos([-1.1513   -1.6081    1.4854]);
+                camtarget([0.0810   -0.0021    0.0680])
+                camva(6.9295);
+                scal = 2000;
+                offc = 0.1;
+                hold on
+                sky = surf(scal*(skyX-offc),scal*(skyY-offc),scal*(skyZ-offc),'LineStyle','none','FaceColor','flat','FaceLighting','gouraud'); %Make a sphere object.
+                lh.Style = 'local';
+                patch_CData = obj.patch_handle.CData;
+                colormap(winter);
+                % obj.patch_handle.FaceVertexCData = ones(63,3) *0.5;
+                obj.patch_handle.FaceVertexCData = repmat([0.9100 0.4100 0.1700],N,1);
+                % obj.patch_handle.FaceVertexCData = patch_CData';
                 if save_state
-                    frame = getframe(gca);
+                    frame = getframe(fig);
                     writeVideo(vid,frame);
                 end
             end

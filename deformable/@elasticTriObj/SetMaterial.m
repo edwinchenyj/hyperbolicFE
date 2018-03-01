@@ -2,7 +2,7 @@ function SetMaterial(obj, Y, P, Rho, type, a, b)
 % Set the material type of some specified elements
 %   elem: the vector of elements specified
 %   type: 1 for neo-hookean, 2 for linear, and more to come...
-assert(type == 1 || type == 2);
+assert(type == 1 || type == 2 || type == 3);
 obj.a = a;
 obj.b = b;
 

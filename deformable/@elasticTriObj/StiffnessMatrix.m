@@ -53,8 +53,8 @@ switch obj.material_type % TODO: change the material type initialization
                 lambda = obj.lambda;
                 tT = obj.T(4*(t-1)+1:4*t,:);
                 W = obj.W(t);
-                tF = obj.F(2*(t-1)+1:2*t,:);
-                tFINV = obj.FINV(2*(t-1)+1:2*t,:);
+%                 tF = obj.F(2*(t-1)+1:2*t,:);
+%                 tFINV = obj.FINV(2*(t-1)+1:2*t,:);
                 
                 % the fourth order tensor
                     % for linear elasticity
@@ -81,6 +81,43 @@ switch obj.material_type % TODO: change the material type initialization
             
         end
         K = obj.K0;
+    case 3
+        
+        for t = 1:obj.NT
+            
+            mu = obj.mu;
+%             mu = 0;
+            lambda = obj.lambda;
+%             lambda = 0;
+            tT = obj.T(4*(t-1)+1:4*t,:);
+            W = obj.W(t);
+            tF = obj.F(2*(t-1)+1:2*t,:);
+%             tFINV = obj.FINV(2*(t-1)+1:2*t,:);
+            
+            % the fourth order tensor
+            % StVK
+            C = mu * (kron((tF')*tF,obj.Iv) + kron(tF',tF) * obj.Kmm...
+                + (kron(obj.Iv,tF*(tF'))- obj.Im)) ...
+                + lambda * (trace(1/2 * ((tF')*tF-obj.Iv)) ...
+                + reshape(tF,[],1) * reshape(tF,[],1)');
+            % element stiffness matrix
+            
+            Kt = W * tT'*C*tT;
+            Kt = 1/2 * (Kt + Kt');
+            
+            for ti = 1:3
+                for tj = 1:3
+                    %            sA(index:index+3) = Kt(obj.IndK(3*(ti-1) + tj,:));
+                    
+                    % same as:
+                    sA(index:index+3) = reshape(Kt(2*(ti-1)+1:2*ti,2*(tj-1)+1:2*tj),4,1);
+                    index = index + 4;
+                end
+            end
+        end
+        
+        % global stiffness matrix
+        K = sparse(obj.ii, obj.jj, sA, 2*obj.N, 2*obj.N);
         
 end
 end

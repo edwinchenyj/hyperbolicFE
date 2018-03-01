@@ -25,6 +25,9 @@ classdef (Abstract) elasticObj < handle
         T; % mapping vectorized nodal position in a tri to its vectorized deformation gradient (4NT by 6)
         % definition: vec(F) = T * vec(x), or vec(dF) = T * vec(dx)
         M % mass matrix
+        Minv
+        K_prev = [];
+        f_prev = [];
         K0 = [];
         
         ii; % sparse structure
@@ -69,6 +72,7 @@ classdef (Abstract) elasticObj < handle
         
         % handle to the axis for visualization
         vis_handle;
+        patch_handle;
         
         % force approximation for polyfit
         polyfit_force_approx;
@@ -77,6 +81,19 @@ classdef (Abstract) elasticObj < handle
         % if the simulating start from rest state, not extra computation
         % needed
         from_rest = true;
+        
+        rest_stiffness;
+        
+        % logical index for none constrained positions
+        indLogical;
+        
+        modifiedK = [];
+        
+        high_res_eig_to_match;
+        eig_targets;
+        eig_ratios;
+        eig_modes;
+        reduced_dimension;
     end
     
     methods (Abstract)
