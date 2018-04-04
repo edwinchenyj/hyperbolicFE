@@ -1,4 +1,3 @@
-
 function sim_annotation = simulation3D_scene_annotation(varargin)
 close all
 clf

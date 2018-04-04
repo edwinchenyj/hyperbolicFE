@@ -1,4 +1,4 @@
-function u_new = ImplicitMid_line_search( dt, u, obj, varargin)
+function [u_new, residual, step_length] = ImplicitMid_line_search( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -105,6 +105,7 @@ while and(residual > 1e-6,  norm(Dv) > 1e-6)
     
     v_new = v_new_temp;
     
+    step_length = norm(step_size*Dv);
 end
 u_new(1:end/2) = dq + 1/2 * dt * (v + v_new);
 u_new(end/2+1:end) = v_new;

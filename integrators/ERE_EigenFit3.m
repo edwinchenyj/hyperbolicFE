@@ -1,4 +1,4 @@
-function [u_new, res, gradient_size] = ERE_EigenFit2( dt, u, obj, varargin)
+function [u_new, res, gradient_size] = ERE_EigenFit3( dt, u, obj, varargin)
 % inputs:
 %   dt: step size
 %    u: current state

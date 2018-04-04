@@ -27,25 +27,24 @@ Mass = Mass(indLogical,indLogical);
 Eforce = obj.ElasticForce;
 Eforce = Eforce(obj.indLogical);
 Eforce =  Eforce + Mass * V_s * (diag(obj.eig_ratios) - eye(length(obj.eig_ratios))) * (V_s') * Eforce;
-ratio = spdiags(obj.eig_ratios,0,obj.eig_modes,obj.eig_modes);
-sI = speye(obj.eig_modes,obj.eig_modes);
-
-low_eig_diag = spdiags(low_eig,0,obj.eig_modes,obj.eig_modes);
-rescaled_const = (ratio - sI) * low_eig_diag;
-rescaled_V_s = rescaled_const * (V_s');
-Z = Mass * V_s;
-Y = Mass * rescaled_V_s';
-rescaled_K = @(x) K*x + Mass * (V_s * (rescaled_V_s * (Mass*x)));
+    ratio = spdiags(obj.eig_ratios,0,obj.eig_modes,obj.eig_modes);
+    sI = speye(obj.eig_modes,obj.eig_modes);
     
+    low_eig_diag = spdiags(low_eig,0,obj.eig_modes,obj.eig_modes);
+    rescaled_const = (ratio - sI) * low_eig_diag;
+    rescaled_V_s = rescaled_const * (V_s');
+    Y = Mass * V_s * (ratio - sI);
+    Z = Mass * V_s * low_eig_diag;
+rescaled_K = @(x) K*x + Y*((Z')*x);
 
 fExternal = Mass * obj.externalGravity(indLogical);
 
 % B = -obj.a * Mass - obj.b * K;
 
-
 vold = u(end/2 + 1:end);
 v = vold;
 f = Eforce -obj.a * Mass * v(indLogical) - obj.b * rescaled_K(v(indLogical)) + fExternal;
+
 
 
 %% version 1
@@ -60,9 +59,9 @@ rhs = dt * (f - dt * rescaled_K(v(indLogical)));
 % [dv_free, flag] = pcg(@A,rhs,tol,maxit);
 % toc
 % v_new_temp(indLogical) = v(indLogical) + dv_free;
-A = Mass - obj.a * dt * Mass + (dt^2) * K - obj.b * dt * K;
-coef = (dt^2) - obj.b * dt;
-dv_free = (A\rhs) - coef * (A\Y)*((speye(obj.eig_modes) + coef * Z'*(A\Y))\(Z'*(A\rhs)));
+A = Mass + obj.a * dt * Mass + dt^2 * K + obj.b * dt * K;
+coef = dt^2 + obj.b * dt;
+dv_free = A\rhs - coef * (A\Y)*((speye(obj.eig_modes) + coef * Z'*(A\Y))\((Z')*(A\rhs)));
 
 
 v(indLogical) = v(indLogical) + dv_free;

@@ -9,5 +9,11 @@ p = genpath(foldername);
 % add everything to the search path
 addpath(p);
 
-% remove old sim
-% rmpath([foldername '/old sim']);
+% remove sim
+sim_p = genpath([foldername filesep 'sim_data']);
+% rmpath([foldername filesep 'sim_data']);
+rmpath(sim_p);
+rmpath([foldername filesep '.git']);
+rmpath([foldername filesep 'codegen']);
+rmpath([foldername filesep 'mex_files' filesep 'codegen']);
+rmpath([foldername filesep 'mex_files' filesep 'codegen' filesep 'mex']);

@@ -90,7 +90,7 @@ simdir = [scriptdir,fs,sim_directory_name];
 mkdir(simdir);
 
 if (exist([simdir fs 'trajectory.mat'], 'file') ~= 2)
-    profile on
+%     profile on
     if NMSC
         %% process the high res mesh first
         
@@ -369,24 +369,25 @@ if (exist([simdir fs 'trajectory.mat'], 'file') ~= 2)
         Dx = Dx(:);
         obj.SetCurrentState(Dx);
     end
-    
-    ha = obj.init_vis;
-    obj.simple_vis(obj.vis_handle);
-    
+%     
+%     ha = obj.init_vis;
+%     obj.simple_vis(obj.vis_handle);
+%     
     v = zeros(length(Dx),1);
     u = [Dx; v];
     fig = gcf;
     fig.Position(1:2) = [100 50];
     fig.Position(3:4) = fig.Position(3:4) *2;
     
-    vidname = strcat(simdir,fs,'video.avi');
+%     vidname = strcat(simdir,fs,'video.avi');
     %     vid = VideoWriter(vidname,'Uncompressed AVI');
-    vid = VideoWriter(vidname);
-    vid.FrameRate = 50;
-    open(vid);
+%     vid = VideoWriter(vidname);
+%     vid.FrameRate = 50;
+%     open(vid);
     % rate to draw the scene
     sim_rate = round(1/dt);
-    draw_rate = round(sim_rate/vid.FrameRate);
+    draw_rate = 1;
+%     draw_rate = round(sim_rate/vid.FrameRate);
     
     
     kinetic_energy = zeros(1,tsteps);
@@ -499,68 +500,68 @@ if (exist([simdir fs 'trajectory.mat'], 'file') ~= 2)
             end
         
         end
-        
-        if or(mod(ti, draw_rate) == 1, draw_rate == 1)
-            axis equal
-            %                 axis auto
-            cla
-            
-            
-            obj.simple_vis(obj.vis_handle,patch_color);
-            %
-            ah = gca;
-            ph = ah.Children;
-            ph.FaceLighting = 'flat';
-            shading interp
-            ph.EdgeLighting = 'none';
-            ph.EdgeAlpha = 0;
-            whitebg('white')
-            if any(strfind(meshfile,'small_bar'))
-                campos([-1.1513   -1.6081    1.4854]);
-                camtarget([0.0810   -0.0021    0.0680])
-                camva(6.9295);
-            elseif any(strfind(meshfile,'octopus'))
-                campos([   -3.7639   -4.9106    3.4267]);
-                camtarget([    0.0603    0.0732   -0.2002])
-                camva(6.9295);
-            elseif any(strfind(meshfile,'armadillo'))
-                campos([2.4703  -20.8381    5.3614]);
-                camtarget([0.7785   -0.6424    0.9054])
-                camva(6.9295);
-            elseif any(strfind(meshfile,'horse'))
-                campos([    -12.6549   -9.8499   17.1693]);
-                camtarget([    -0.0506   -0.0023    0.0166])
-%                 camva(7.3921);
-                camup([    0.5763    0.4503    0.6820]);
-            end
-            hold on
-            colormap(bone);
-            % obj.patch_handle.FaceVertexCData = ones(63,3) *0.5;
-            facecolor = winter(6);
-            %                 facecolor = facecolor(2,:);
-            obj.patch_handle.FaceVertexCData = repmat(facecolor(5,:),N,1);
-            obj.patch_handle.FaceAlpha = 0.2;
-            obj.patch_handle.EdgeColor = [0.1 0.1 0.1];
-            obj.patch_handle.EdgeAlpha = 0.8;
-            obj.patch_handle.Marker = 'none';
-            facecolor2 = spring(6);
-            obj.patch_handle.MarkerFaceColor = facecolor2(4,:);
-            
-            fig.Children.Visible = 'off';
-            fig.Children.Clipping = 'off';
-            fig.Children.Projection = 'perspective';
-            lighting flat
-            material dull
-            lh = camlight('headlight');
-            lh.Style = 'local';
-            %
-            %             dim = [.7 .0 .7 .5];
-            
-            frame = getframe(fig);
-            writeVideo(vid,frame);
-            
-            
-        end
+%         
+%         if or(mod(ti, draw_rate) == 1, draw_rate == 1)
+%             axis equal
+%             %                 axis auto
+%             cla
+%             
+%             
+%             obj.simple_vis(obj.vis_handle,patch_color);
+%             %
+%             ah = gca;
+%             ph = ah.Children;
+%             ph.FaceLighting = 'flat';
+%             shading interp
+%             ph.EdgeLighting = 'none';
+%             ph.EdgeAlpha = 0;
+%             whitebg('white')
+%             if any(strfind(meshfile,'small_bar'))
+%                 campos([-1.1513   -1.6081    1.4854]);
+%                 camtarget([0.0810   -0.0021    0.0680])
+%                 camva(6.9295);
+%             elseif any(strfind(meshfile,'octopus'))
+%                 campos([   -3.7639   -4.9106    3.4267]);
+%                 camtarget([    0.0603    0.0732   -0.2002])
+%                 camva(6.9295);
+%             elseif any(strfind(meshfile,'armadillo'))
+%                 campos([2.4703  -20.8381    5.3614]);
+%                 camtarget([0.7785   -0.6424    0.9054])
+%                 camva(6.9295);
+%             elseif any(strfind(meshfile,'horse'))
+%                 campos([    -12.6549   -9.8499   17.1693]);
+%                 camtarget([    -0.0506   -0.0023    0.0166])
+% %                 camva(7.3921);
+%                 camup([    0.5763    0.4503    0.6820]);
+%             end
+%             hold on
+%             colormap(bone);
+%             % obj.patch_handle.FaceVertexCData = ones(63,3) *0.5;
+%             facecolor = winter(6);
+%             %                 facecolor = facecolor(2,:);
+%             obj.patch_handle.FaceVertexCData = repmat(facecolor(5,:),N,1);
+%             obj.patch_handle.FaceAlpha = 0.2;
+%             obj.patch_handle.EdgeColor = [0.1 0.1 0.1];
+%             obj.patch_handle.EdgeAlpha = 0.8;
+%             obj.patch_handle.Marker = 'none';
+%             facecolor2 = spring(6);
+%             obj.patch_handle.MarkerFaceColor = facecolor2(4,:);
+%             
+%             fig.Children.Visible = 'off';
+%             fig.Children.Clipping = 'off';
+%             fig.Children.Projection = 'perspective';
+%             lighting flat
+%             material dull
+%             lh = camlight('headlight');
+%             lh.Style = 'local';
+%             %
+%             %             dim = [.7 .0 .7 .5];
+%             
+% %             frame = getframe(fig);
+% %             writeVideo(vid,frame);
+%             
+%             
+%         end
     end
     
     % plot the energy
@@ -588,10 +589,10 @@ if (exist([simdir fs 'trajectory.mat'], 'file') ~= 2)
     close(gcf)
     close(gcf)
     close(gcf)
-    close(vid);
+%     close(vid);
     name = [simdir fs 'trajectory.mat'];
-    profile off
-    profsave(profile('info'),[simdir fs 'profile_results']);
+%     profile off
+%     profsave(profile('info'),[simdir fs 'profile_results']);
 else
     disp([material_type simdir fs 'trajectory.mat'])
     disp('already exist. delete it if you want to re-run')

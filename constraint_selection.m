@@ -189,6 +189,16 @@ elseif any(strfind(meshfile,'octopus'))
             indLogical = logical(ones(3,N));
             indLogical(:,indRemove) = logical(0);
             indLogical = indLogical(:);
+        case 'unif4'
+            center_points = find(and(and(abs(nodeM(:,1)-0.22) < 1.1, ...
+                abs(nodeM(:,2)+1.1865) < 1.1135),abs(nodeM(:,3)- 1.1) < 2.2));
+            indCenter = center_points;
+            N = size(nodeM,1); % number of nodes
+            indAll = 1:N;
+            indRemove = indAll([indCenter(:)]);
+            indLogical = logical(ones(3,N));
+            indLogical(:,indRemove) = logical(0);
+            indLogical = indLogical(:);
             
     end
 elseif any(strfind(meshfile,'armadillo'))
@@ -226,6 +236,21 @@ elseif any(strfind(meshfile,'armadillo'))
                 end
             end
         case 'unif1'
+            bottom_points = find(abs(nodeM(:,3)-min(nodeM(:,3))) < 0.08);
+            top_points = find(abs(nodeM(:,3)-max(nodeM(:,3))) < 0.08);
+            
+            %% get logical indices
+            indBottom = bottom_points;
+            indTop = top_points;
+            constraint_points = top_points;
+            nFixed = length(indTop);
+            
+            N = size(nodeM,1); % number of nodes
+            indAll = 1:N;
+            indRemove = indAll([indTop(:)]);
+            indLogical = logical(ones(3,N));
+            indLogical(:,indRemove) = logical(0);
+            indLogical = indLogical(:);
             
     end
     
@@ -359,7 +384,35 @@ elseif any(strfind(meshfile,'bunnymesh'))
                     Y_list(i) = Y_list(i) / 10;
                 end
             end
+        case 'hete5'
             
+% fidn all the points around the same height with the lowest point
+bottom_points = find(abs(nodeM(:,3)-nodeM(1,3)) < (0.01));
+
+nFixed = length(bottom_points);
+
+N = size(nodeM,1); % number of nodes
+
+% N = size(nodeM,1); % number of nodes
+indAll = 1:N;
+indRemove = indAll(bottom_points(:));
+indLogical = true(3,N);
+indLogical(:,indRemove) = false;
+indLogical = indLogical(:);
+%% find elements close to constraints and make them softer
+soft_points = find(abs(nodeM(:,3)-min(nodeM(1,3))) < (0.4));
+
+soft_points_height_threshold = max(soft_points);
+
+Y_list = Y * ones(size(elem,1),1);
+P_list = P * ones(size(elem,1),1);
+rho_list = rho * ones(size(elem,1),1);
+
+for i = 1:size(elem,1)
+    if all(elem(i,:) < soft_points_height_threshold)
+        Y_list(i) = Y_list(i)/10;
+    end
+end
         case 'unif1'
             % constraint more points on the left
             top_points = find(abs(nodeM(:,3)-max(nodeM(:,3))) < 0.12);
@@ -408,7 +461,21 @@ elseif any(strfind(meshfile,'bunnymesh'))
             indLogical = logical(ones(3,N));
             indLogical(:,indRemove) = logical(0);
             indLogical = indLogical(:);
+        case 'unif4'
             
+% fidn all the points around the same height with the lowest point
+bottom_points = find(abs(nodeM(:,3)-nodeM(1,3)) < (0.01));
+
+nFixed = length(bottom_points);
+
+N = size(nodeM,1); % number of nodes
+
+% N = size(nodeM,1); % number of nodes
+indAll = 1:N;
+indRemove = indAll(bottom_points(:));
+indLogical = true(3,N);
+indLogical(:,indRemove) = false;
+indLogical = indLogical(:);
     end
 elseif any(strfind(meshfile,'horse'))
     switch scene_name

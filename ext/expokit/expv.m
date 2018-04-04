@@ -76,7 +76,7 @@
 %  ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 
 function [w, err, hump, stages, m] = expv( t, A, v, tol, m )
-
+%#codegen
 [n,n] = size(A);
 if nargin == 3,
   tol = 1.0e-7;

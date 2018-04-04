@@ -49,8 +49,9 @@ elseif length(obj.material_type) == 1
                 
                 tFINV = obj.FINV(3*(t-1)+1:3*t,:);
                 
-                J = det(tF);
-                P = mu *(tF - tFINV') + lambda * log(J) * tFINV';
+%                 J = det(tF);
+%                 P = mu *(tF - tFINV') + lambda * log(J) * tFINV';
+                P = neohookean_P_mex(mu,lambda,tF,tFINV);
                 
                 H = -obj.W(t) * P * (obj.DmINV(3*(t-1)+1:3*t,:)');
                 i = obj.elem(t, 1); j = obj.elem(t, 2); k = obj.elem(t, 3); l = obj.elem(t, 4);
@@ -72,8 +73,9 @@ elseif length(obj.material_type) == 1
                 mu = obj.mu;
                 lambda = obj.lambda;
                 
-                P = (tF)*(mu * ((tF') * tF - obj.Iv)) ...
-                    + (tF) * (lambda * trace((1/2) * ((tF') * tF - obj.Iv)) * obj.Iv);
+%                 P = (tF)*(mu * ((tF') * tF - obj.Iv)) ...
+%                     + (tF) * (lambda * trace((1/2) * ((tF') * tF - obj.Iv)) * obj.Iv);
+                P = stvk_P_mex(mu,lambda,tF,obj.Iv);
                 
                 
                 H = -obj.W(t) * P * (obj.DmINV(3*(t-1)+1:3*t,:)');
@@ -102,8 +104,9 @@ else
                 
                 tFINV = obj.FINV(3*(t-1)+1:3*t,:);
                 
-                J = det(tF);
-                P = mu *(tF - tFINV') + lambda * log(J) * tFINV';
+%                 J = det(tF);
+%                 P = mu *(tF - tFINV') + lambda * log(J) * tFINV';
+                P = neohookean_P_mex(mu,lambda,tF,tFINV);
                 
                 H = -obj.W(t) * P * (obj.DmINV(3*(t-1)+1:3*t,:)');
                 i = obj.elem(t, 1); j = obj.elem(t, 2); k = obj.elem(t, 3); l = obj.elem(t, 4);
@@ -121,14 +124,16 @@ else
                 f_new = zeros(3*obj.N,1);
                 
                 %             type = obj.material_type;
-                tF = obj.F(3*(t-1)+1:3*t,:);
+                tF = (obj.F(3*(t-1)+1:3*t,:));
                 
                 mu = obj.mu(t);
                 lambda = obj.lambda(t);
-                
+                % TODO: add a switch for mex
                 P = (tF)*(mu * ((tF') * tF - obj.Iv)) ...
                     + (tF) * (lambda * trace((1/2) * ((tF') * tF - obj.Iv)) * obj.Iv);
-                
+%                 isreal(tF)
+%                 tF
+%                 P = stvk_P_mex(mu,lambda,tF,obj.Iv);
                 
                 H = -obj.W(t) * P * (obj.DmINV(3*(t-1)+1:3*t,:)');
                 i = obj.elem(t, 1); j = obj.elem(t, 2); k = obj.elem(t, 3); l = obj.elem(t, 4);

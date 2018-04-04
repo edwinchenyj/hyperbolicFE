@@ -2,18 +2,18 @@ fname = mfilename;
 fname_end = strfind(mfilename,'_p_script');
 
 fname = fname(1:fname_end-1);
-meshfiles = {'barmesh2','barmesh6','barmesh9'};
+meshfiles = {'barmesh2','barmesh6','barmesh7','barmesh8','barmesh9','barmesh10'};
 % meshfiles = {'small_bar_h_4.80e-01','small_bar_h_2.50e-01','small_bar_h_2.00e-01'};
-% meshfiles = {'coarseoctopus.1'};
+% meshfiles = {'barmesh2'};
 parameter_lists = {...
     'dt',[1/100],...
-    'T',[5],...
-    'solver',{'SemiImplicit_rescaled'},...
-    'Y',8e5,...
+    'T',[1.5],...
+    'solver',{'SemiImplicit_EigenFit3'},...
+    'Y',5e5,...
     'P',0.45,...
     'rho',1e3,...
     'a',0,...
-    'b',0.02,...
+    'b',0.2,...
     'material_type',{'stvk'},...
     'gravity',{'on'},...
     'NMSC',[true],...
@@ -23,21 +23,21 @@ parameter_lists = {...
     'fine_meshfile',{'barmesh9'},...
     };
 
-% parameter_lists = {...
-%     'dt',[1/100],...
-%     'T',[5],...
-%     'solver',{'SemiImplicit'},...
-%     'Y',8e5,...
-%     'P',0.45,...
-%     'rho',1e3,...
-%     'a',0,...
-%     'b',0.02,...
-%     'material_type',{'stvk'},...
-%     'gravity',{'on'},...
-%     'NMSC',[false],...
-%     'meshfile',meshfiles,...
-%     'scene_name',{'unif1'},...
-%     }; 
+parameter_lists = {...
+    'dt',[1/100],...
+    'T',[1.5],...
+    'solver',{'SemiImplicit'},...
+    'Y',2e5,...
+    'P',0.45,...
+    'rho',1e3,...
+    'a',0,...
+    'b',0.4,...
+    'material_type',{'stvk'},...
+    'gravity',{'on'},...
+    'NMSC',[false],...
+    'meshfile',meshfiles,...
+    'scene_name',{'unif1'},...
+    }; 
 
 filename_list = parse_parameter(fname,[],parameter_lists);
 annotation_list = parse_parameter('simulation3D_scene_annotation',[],parameter_lists);
@@ -50,14 +50,16 @@ end
 
 vid_enum = 1;
 video_name = [fname num2str(vid_enum) '.avi'];
-while exist(video_name) == 2
+while exist(video_name,'file') == 2
     vid_enum = vid_enum+1;
     video_name = [fname num2str(vid_enum) '.avi'];
 end
 
 %%
-colors = [summer(3); bone(3); copper(3)];
-colors = colors(2:3:end,:);
+% colors = [gray(3);summer(3); bone(3); copper(3)];
+% colors = colors(2:3:end,:);
+colors = flipud(copper(20));
+colors = colors(end/4+1:end,:);
 edge_colors = num2cell(colors,2); % create a list of different colours
 
 trajectories = cell(size(filename_list));
@@ -164,43 +166,43 @@ for ti = 1:tsteps
             positions = positionss{i_filename};
             positionsM = positionsMs{i_filename};
             positions = u(1:end/2) + positionsM;
-            if any(strfind(filename,'octopus'))
-                switch i_filename
-                
-                case 1
-                    positions(1:3:end) = positions(1:3:end) - 0.15;
-                    %                         positions(2:3:end) = positions(2:3:end) - 0.3;
-                    positions(3:3:end) = positions(3:3:end) + 0.24;
-                case 2
-                    positions(1:3:end) = positions(1:3:end) + 0.5;
-                    %                         positions(2:3:end) = positions(2:3:end) - 0.2;
-                    positions(3:3:end) = positions(3:3:end) + 0.24;
+%             if any(strfind(filename,'octopus'))
+%                 switch i_filename
+%                 
+%                 case 1
+%                     positions(1:3:end) = positions(1:3:end) - 0.15;
+%                     %                         positions(2:3:end) = positions(2:3:end) - 0.3;
+%                     positions(3:3:end) = positions(3:3:end) + 0.24;
+%                 case 2
+%                     positions(1:3:end) = positions(1:3:end) + 0.5;
+%                     %                         positions(2:3:end) = positions(2:3:end) - 0.2;
+%                     positions(3:3:end) = positions(3:3:end) + 0.24;
+% %                 case 3
+% %                     positions(1:3:end) = positions(1:3:end) + 0.35;
+% %                     %                         positions(2:3:end) = positions(2:3:end) - 0.1;
+% %                     positions(3:3:end) = positions(3:3:end) + 0.24;
+%                     
+%             end
+%             else
+%             switch i_filename
+%                 
+%                 case 1
+%                     positions(1:3:end) = positions(1:3:end) - 0.15 - 4;
+%                     %                         positions(2:3:end) = positions(2:3:end) - 0.3;
+%                     positions(3:3:end) = positions(3:3:end) + 0.24;
+%                 case 2
+%                     positions(1:3:end) = positions(1:3:end) + 0.2 - 2;
+%                     %                         positions(2:3:end) = positions(2:3:end) - 0.2;
+%                     positions(3:3:end) = positions(3:3:end) + 0.24;
 %                 case 3
 %                     positions(1:3:end) = positions(1:3:end) + 0.35;
 %                     %                         positions(2:3:end) = positions(2:3:end) - 0.1;
 %                     positions(3:3:end) = positions(3:3:end) + 0.24;
-                    
-            end
-            else
-            switch i_filename
-                
-                case 1
-                    positions(1:3:end) = positions(1:3:end) - 0.15 - 4;
-                    %                         positions(2:3:end) = positions(2:3:end) - 0.3;
-                    positions(3:3:end) = positions(3:3:end) + 0.24;
-                case 2
-                    positions(1:3:end) = positions(1:3:end) + 0.2 - 2;
-                    %                         positions(2:3:end) = positions(2:3:end) - 0.2;
-                    positions(3:3:end) = positions(3:3:end) + 0.24;
-                case 3
-                    positions(1:3:end) = positions(1:3:end) + 0.35;
-                    %                         positions(2:3:end) = positions(2:3:end) - 0.1;
-                    positions(3:3:end) = positions(3:3:end) + 0.24;
-                    %                     case 4
-                    %                         positions(2:3:end) = positions(2:3:end) + 0.0;
-                    %                         positions(3:3:end) = positions(3:3:end) + 0.04;
-            end
-            end
+%                     %                     case 4
+%                     %                         positions(2:3:end) = positions(2:3:end) + 0.0;
+%                     %                         positions(3:3:end) = positions(3:3:end) + 0.04;
+%             end
+%             end
             node = transpose(reshape(positions,3,[]));
             tri1 = surftri(node,elems{i_filename});
             h{i_filename} = trimesh(tri1,node(:,1),node(:,2),node(:,3));
@@ -216,7 +218,7 @@ for ti = 1:tsteps
             %                 phlist = findobj(ah,'Type','patch');
             %                 ph = phlist(i_filename);
             h{i_filename}.FaceLighting = 'flat';
-            h{i_filename}.FaceAlpha = 0.3;
+%             h{i_filename}.FaceAlpha = 0.3;
             h{i_filename}.FaceColor = 'interp';
             %                 ph.EdgeLighting = 'gouraud';
             %                 ph.BackFaceLighting = 'lit';
@@ -231,9 +233,9 @@ for ti = 1:tsteps
             %                 colormap(autumn);
             
             shading faceted
-            h{i_filename}.EdgeColor = edge_colors{i_filename};
+%             h{i_filename}.EdgeColor = edge_colors{i_filename};
             %                 ph.EdgeLighting = 'none';
-            h{i_filename}.EdgeAlpha = 0.7;
+%             h{i_filename}.EdgeAlpha = 0.7;
             %                 ph.LineWidth = 0.25;
             %                 ph.AlignVertexCenters = 'on';
             %                 whitebg(cmap)
@@ -250,8 +252,14 @@ for ti = 1:tsteps
             campos([0.2538    3.5214    1.4138]);
             camtarget([        0.2078   -0.0189    0.2025]);
             elseif any(strfind(meshfiles{1},'bar'))
-            campos([-0.9671  -46.0394   -0.6064]);
-            camtarget([-0.9671    0.2523   -0.6071]);
+                
+%             campos([-0.9671  -46.0394   -0.6064]);
+%             camtarget([-0.9671    0.2523   -0.6071]);
+            
+%             campos([-3.3552  -23.0902   -0.3762]);
+%             camtarget([-3.3552    0.2523   -0.3765]);
+            campos([1.0000  -15.1505   -0.2496-0.05]);
+            camtarget([1.0000   -0.1701   -0.2496-0.05]);
             
             elseif any(strfind(meshfiles{1},'octopus'))
                 campos([    0.2356   7.6533    4.5812]);
@@ -298,9 +306,9 @@ for ti = 1:tsteps
         end
         for i_filename = 1:length(trajectories)
             t = h{i_filename};
-            t.EdgeColor = [0.1 0.1 0.1];
-            t.FaceAlpha = 1;
-            t.EdgeAlpha = 0.9;
+            t.EdgeColor = t.FaceColor;
+            t.FaceAlpha = 0.1;
+            t.EdgeAlpha = 0.5;
             
         end
 %         h_shadow = [];

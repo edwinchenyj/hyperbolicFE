@@ -162,6 +162,8 @@ classdef elasticTetObj < elasticObj
         end
         
         [V_s, low_eig] = EigenFit_subspace(obj,K,M);
+        [V_s, low_eig] = EigenFit_subspace2(obj,K,M);
+
         
         K = eigModification(obj,eig)
         

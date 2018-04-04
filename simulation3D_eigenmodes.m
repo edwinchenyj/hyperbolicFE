@@ -91,6 +91,9 @@ sim_directory_name = sim_directory(varargin);
 simdir = [scriptdir,fs,sim_directory_name];
 mkdir(simdir);
 
+colors = [summer(3); bone(3); copper(3)];
+colors = colors(2:3:end,:);
+
 if (exist([simdir fs 'trajectory.mat'], 'file') ~= 2)
     
     if NMSC
@@ -191,44 +194,58 @@ if (exist([simdir fs 'trajectory.mat'], 'file') ~= 2)
         
         fig = gcf;
         
-
+        
         
         for i_mode = 1:eig_modes
-%             Dx(indLogical) = eigv(:,i_mode)/20;
+            %             Dx(indLogical) = eigv(:,i_mode)/20;
             Dx(indLogical) = eigv(:,i_mode);
             obj.SetCurrentState(Dx);
             delete(gca)
             ha = obj.init_vis;
             obj.simple_vis(obj.vis_handle);
+            
+            ha.Children.FaceAlpha = 0.2;
+            ha.Children.EdgeAlpha = 0.3;
+            ha.Children.FaceColor = colors(2,:);
+            ha.Children.EdgeColor = colors(2,:);
+            hold on
+            simpplot(nodeM,elem)
+            ha.Children(1).FaceAlpha = 0.2;
+            ha.Children(1).EdgeAlpha = 0.3;
+            ha.Children(1).FaceColor = colors(3,:);
+            ha.Children(1).EdgeColor = colors(3,:);
+            ha.Visible = 'off';
             axis equal
             if any(strfind(meshfile,'small_bar'))
                 campos([-1.1513   -1.6081    1.4854]);
                 camtarget([0.0810   -0.0021    0.0680])
                 camva(6.9295);
             elseif any(strfind(meshfile,'octopus'))
-                campos([   -3.7639   -4.9106    3.4267]);
-                camtarget([    0.0603    0.0732   -0.2002])
-                camva(6.9295);
+                campos([   0.6404    0.6628   76.4171]);
+                camtarget([0.6404    0.6628   -0.7084])
+                %                 camva(6.9295);
             elseif any(strfind(meshfile,'armadillo'))
-                campos([2.4703  -20.8381    5.3614]);
-                camtarget([0.7785   -0.6424    0.9054])
+                campos([1.7572  -21.1193    4.3577]);
+                camtarget([0.0654   -0.9236   -0.0983])
                 camva(6.9295);
             elseif any(strfind(meshfile,'horse'))
-%                 campos('auto')
-%                 camtarget('auto')
+                %                 campos('auto')
+                %                 camtarget('auto')
                 campos([    -12.6549   -9.8499   17.1693]);
                 camtarget([    -0.0506   -0.0023    0.0166])
-%                 camva(7.3921);
+                %                 camva(7.3921);
                 camup([    0.5763    0.4503    0.6820]);
             end
-            print(fig,[sim_directory_name(10:end) '-hi-res-mode' num2str(i_mode) '.png'],'-dpng')
+            textbox = annotation('textbox','String',{num2str(i_mode),num2str(low_eig(i_mode))});
+            print(fig,['armadillo' filesep 'unif' filesep sim_directory_name(20:end) '-hi-res-mode' num2str(i_mode) '.png'],'-dpng')
+            delete(textbox);
             delete(gca)
             hold on
         end
     end
-%     close(fig)
-% cla
-%%
+    %     close(fig)
+    % cla
+    %%
     
     if exist([meshfile '.mat'], 'file') ~= 2
         error('mesh does not exist')
@@ -339,40 +356,56 @@ if (exist([simdir fs 'trajectory.mat'], 'file') ~= 2)
     obj.indLogical = indLogical;
     eigv = V(:,permutation_indices);
     
-
+    
     v = zeros(length(Dx),1);
     u = [Dx; v];
     fig = gcf;
-
+    
     % rate to draw the scene
+    
     for i_mode = 1:eig_modes
-%         Dx(indLogical) = eigv(:,i_mode)/20;
-            Dx(indLogical) = eigv(:,i_mode);
-
+        %             Dx(indLogical) = eigv(:,i_mode)/20;
+        Dx(indLogical) = eigv(:,i_mode);
         obj.SetCurrentState(Dx);
         delete(gca)
         ha = obj.init_vis;
         obj.simple_vis(obj.vis_handle);
+        
+        ha.Children.FaceAlpha = 0.2;
+        ha.Children.EdgeAlpha = 0.3;
+        ha.Children.FaceColor = colors(2,:);
+        ha.Children.EdgeColor = colors(2,:);
+        hold on
+        simpplot(nodeM,elem)
+        ha.Children(1).FaceAlpha = 0.2;
+        ha.Children(1).EdgeAlpha = 0.3;
+        ha.Children(1).FaceColor = colors(3,:);
+        ha.Children(1).EdgeColor = colors(3,:);
+        ha.Visible = 'off';
         axis equal
         if any(strfind(meshfile,'small_bar'))
             campos([-1.1513   -1.6081    1.4854]);
             camtarget([0.0810   -0.0021    0.0680])
             camva(6.9295);
         elseif any(strfind(meshfile,'octopus'))
-            campos([   -3.7639   -4.9106    3.4267]);
-            camtarget([    0.0603    0.0732   -0.2002])
-            camva(6.9295);
+            campos([   0.6404    0.6628   76.4171]);
+            camtarget([0.6404    0.6628   -0.7084])
+            %                 camva(6.9295);
         elseif any(strfind(meshfile,'armadillo'))
-            campos([2.4703  -20.8381    5.3614]);
-            camtarget([0.7785   -0.6424    0.9054])
+            campos([1.7572  -21.1193    4.3577]);
+            camtarget([0.0654   -0.9236   -0.0983])
             camva(6.9295);
         elseif any(strfind(meshfile,'horse'))
-                campos([    -12.6549   -9.8499   17.1693]);
-                camtarget([    -0.0506   -0.0023    0.0166])
-%                 camva(7.3921);
-                camup([    0.5763    0.4503    0.6820]);
+            %                 campos('auto')
+            %                 camtarget('auto')
+            campos([    -12.6549   -9.8499   17.1693]);
+            camtarget([    -0.0506   -0.0023    0.0166])
+            %                 camva(7.3921);
+            camup([    0.5763    0.4503    0.6820]);
         end
-        print(fig,[sim_directory_name(10:end) '-mode' num2str(i_mode) '.png'],'-dpng')
+        textbox = annotation('textbox','String',{num2str(i_mode),num2str(low_eig(i_mode))});
+        print(fig,['coarsearmadillo' filesep 'unif' filesep sim_directory_name(20:end) '-mode' num2str(i_mode) '.png'],'-dpng')
+        delete(textbox)
         delete(gca)
         hold on
     end
