@@ -18,7 +18,7 @@ switch obj.material_type % TODO: change the material type initialization
             
             % the fourth order tensor
                 % for Neo-hookean
-                C = (mu * obj.Im + lambda * reshape(tFINV',[],1)*reshape(tFINV',[],1)' - (lambda * log(det(tF)) - mu) * kron(tFINV,tFINV') * obj.Kmm);
+                C = (mu * obj.Im + lambda * reshape(tFINV',[],1)*reshape(tFINV',[],1)' - (lambda * log(tF(1,1)*tF(2,2) - tF(1,2)*tF(2,1)) - mu) * kron(tFINV,tFINV') * obj.Kmm);
 %                 C = mu * obj.Im + mu * obj.Kmm* kron(tFINV',tFINV)...
 %                     - lambda * (log(det(tF))*obj.Kmm*kron(tFINV',tFINV))...
 %                     + lambda*(obj.Kmm*(tFINV(:)*reshape(transpose(tFINV),1,4)));
@@ -36,7 +36,7 @@ switch obj.material_type % TODO: change the material type initialization
                     %            sA(index:index+3) = Kt(obj.IndK(3*(ti-1) + tj,:));
                     
                     % same as:
-                    sA(index:index+3) = reshape(Kt(2*(ti-1)+1:2*ti,2*(tj-1)+1:2*tj),4,1);
+                    sA(index:index+3) = [Kt(2*ti-1,2*tj-1); Kt(2*ti,2*tj-1); Kt(2*ti-1,2*tj); Kt(2*ti,2*tj)];
                     index = index + 4;
                 end
             end
