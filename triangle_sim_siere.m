@@ -9,15 +9,16 @@ draw = true;
 % test_mode = true;
 
 dt = 1/100;
-tsteps = 100*3;
+tsteps = 1000*3;
 
 fs = filesep;
 
 mesh_shape = 'triangle';
-maxA = 0.5;
+maxA = 0.01;
 simulation_type = 'CG';
 
 solver = 'SIERE';
+modes = 3;
 % constraints = 1; % types of constraint
 % 1: free
 
@@ -92,8 +93,11 @@ constraint_indices = repmat(nodeM(:,1) < 0.001,1,2);
 constraint_indices = reshape((constraint_indices'),[],1);
 % deformation for the initial condition
 
-deformation_mode = V(:,3 + deformation_mode_number)/0.5;
+deformation_mode= zeros(size(V,1),1);
 
+for num = deformation_mode_number
+    deformation_mode = V(:,3 + num) + deformation_mode;
+end
 Dx = deformation_mode;
 
 obj.SetCurrentState(Dx);
@@ -131,9 +135,12 @@ end
 
 % rate to draw the scene
 sim_rate = round(1/dt);
-draw_rate = round(sim_rate/vid.FrameRate);
+
 
 trajectory = zeros(size(u,1),tsteps);
+ritz_errors = zeros(modes,tsteps);
+recompute = true;
+recompute_count = 1;
 for ti = 1:tsteps
     trajectory(:,ti) = u;
     
@@ -141,10 +148,19 @@ for ti = 1:tsteps
         case 'ERE'
             u = ERE(dt, u, obj);
         case 'SIERE'
-            u = SIERE(dt, u, obj, 1, constraint_indices);
             
+               u = SIERE(dt, u, obj, modes, constraint_indices,recompute);
+               ritz_errors(:,ti) = obj.ritz_errors';
+               if norm(obj.ritz_errors) > 1e3
+                   recompute = true;
+                   recompute_count = recompute_count + 1;
+                   disp(recompute_count)
+               else
+                   recompute = false;
+               end
     end
     if(draw)
+        draw_rate = round(sim_rate/vid.FrameRate);
         if or(mod(ti, draw_rate) == 1, draw_rate == 1)
             axis(axis_box)
             cla
@@ -159,12 +175,14 @@ for ti = 1:tsteps
         
     end
 end
-
+figure
+plot(1:tsteps,ritz_errors');
+disp(recompute_count)
 
 % fname = [filename '_trajectory.mat'];
 % save(fname)
 
-save([simdir fs 'trajectory.mat']);
+% save([simdir fs 'trajectory.mat']);
 
 
 

@@ -93,6 +93,8 @@ classdef (Abstract) elasticObj < handle
         eig_targets;
         eig_ratios;
         eig_modes;
+        eig_values;
+        ritz_errors;
         reduced_dimension;
     end
     

@@ -1,4 +1,4 @@
-function u_new = SIERE( dt, u, obj,reduced_n, varargin)
+function u_new = SIERE( dt, u, obj, reduced_n, constraint_indices, recompute, varargin)
 % inputs:
 %   dt: step size
 %    u: current state
@@ -6,11 +6,6 @@ function u_new = SIERE( dt, u, obj,reduced_n, varargin)
 %  varargin: optional input for constraints
 % notice sum(nnz(~constraint_indices)) = length(u)/2
 
-if nargin == 4
-    constraint_indices = false(size(u,1)/2,1);
-elseif nargin == 5
-    constraint_indices = varargin{1};
-end
 
 indLogical = ~constraint_indices;
 
@@ -34,8 +29,16 @@ ExternalForce = M * obj.externalGravity(indLogical);
 
 f = ElasticForce + ExternalForce;
 
-
+if recompute
 [Us,D] = eigs(K,M,reduced_n,'smallestabs');
+obj.eig_modes = Us;
+obj.eig_values = D;
+else
+Us = obj.eig_modes;
+D = obj.eig_values;
+end
+
+obj.ritz_errors = vecnorm(M\K*Us - Us*D);
 
 vG = Us*(Us')*M*v;
 vH = v - vG;
@@ -48,6 +51,7 @@ JGr = [zeros(reduced_n) eye(reduced_n); -D zeros(reduced_n)];
 Gr = [Us'*M*v; Us'*f];
 
 p = phi(dt * JGr);
+%p_simple = phi_simple(dt,D);
 
 delta = dt*H + dt * [Us zeros(n,reduced_n); zeros(n,reduced_n) Us] * p * Gr;
 
@@ -87,3 +91,19 @@ end
 
 out = real(U*D/(U));
 end
+% 
+% function out = phi_simple(dt,D)
+% evs = sqrt(diag(D)) * 1i * dt;
+% evs = [evs; -evs];
+% eVecs = zeros(size(D,1)*2);
+% 
+% for j = 1:length(evs)/2
+%     eVecs(j,j) = 1;
+%     eVecs(j+length(evs)/2,j) = evs(j);
+%     eVecs(j,j+length(evs)/2) = -1;
+%     eVecs(j+length(evs)/2,j+length(evs)/2) = evs(j);
+% end
+% evs = (exp(evs) -1)./evs;
+% 
+% 
+% end
