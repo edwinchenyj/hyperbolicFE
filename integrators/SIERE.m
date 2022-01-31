@@ -29,16 +29,28 @@ ExternalForce = M * obj.externalGravity(indLogical);
 
 f = ElasticForce + ExternalForce;
 
-if recompute
-[Us,D] = eigs(K,M,reduced_n,'smallestabs');
-obj.eig_modes = Us;
-obj.eig_values = D;
-else
-Us = obj.eig_modes;
-D = obj.eig_values;
+if ~isempty(obj.eig_values)
+    obj.ritz_errors = vecnorm(M\K*obj.eig_modes - obj.eig_modes*obj.eig_values);
 end
 
-obj.ritz_errors = vecnorm(M\K*Us - Us*D);
+if norm(obj.ritz_errors) > 1e4
+    disp('ritz error norm:')
+    disp(norm(obj.ritz_errors))
+    if sum(~indLogical) < 6
+        [Us,D] = eigs(K,M,reduced_n + 6,'smallestabs');
+        obj.eig_modes = Us(:,end-reduced_n+1:end);
+        obj.eig_values = D(end-reduced_n+1:end,end-reduced_n+1:end);
+        
+    else
+        [Us,D] = eigs(K,M,reduced_n,'smallestabs');
+        obj.eig_modes = Us;
+        obj.eig_values = D;
+    end
+end
+Us = obj.eig_modes;
+D = obj.eig_values;
+
+
 
 vG = Us*(Us')*M*v;
 vH = v - vG;
@@ -59,6 +71,21 @@ J = [zeros(n), speye(n); -M\K zeros(n)];
 JG = [zeros(n) Us*(Us')*M; -Us*(Us')*K*Us*(Us')*M zeros(n)];
 JH = J - JG;
 x0 = (speye(2*n)-dt*JH)\delta;
+
+disp('cond siere:')
+disp(cond((speye(2*n)-dt*JH)))
+disp('cond si:')
+disp(cond((speye(2*n)-dt*J)))
+
+disp('svd ratio siere:')
+ev_large_siere = svds((speye(2*n)-dt*JH),1,'largest');
+ev_small_siere = svds((speye(2*n)-dt*JH),1,'smallest');
+disp(abs(ev_large_siere)/abs(ev_small_siere))
+disp('svd ratio si:')
+ev_large_si = svds((speye(2*n)-dt*J),1,'largest');
+ev_small_si = svds((speye(2*n)-dt*J),1,'smallest');
+disp(abs(ev_large_si)/abs(ev_small_si))
+
 
 x_new = u(1:end/2);
 v_new = u(end/2+1:end);

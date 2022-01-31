@@ -12,7 +12,7 @@ faces=[t(:,[1,2,3]);
 node4=[t(:,4);t(:,3);t(:,2);t(:,1)];
 faces=sort(faces,2);
 [foo,ix,jx]=unique(faces,'rows');
-vec=histc(jx,1:max(jx));
+vec=histcounts(jx,1:(1+max(jx)))';
 qx=find(vec==1);
 tri=faces(ix(qx),:);
 node4=node4(ix(qx));

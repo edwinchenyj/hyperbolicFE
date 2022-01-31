@@ -1,4 +1,4 @@
-function [p,f,t] = read_tetgenmesh( file )
+function [p,t] = read_tetgenmesh( file )
 
 % READ_TETGENMESH  Reads Tetgen meshes
 %   Reads the native Tetgen format mesh-files into Matlab. The output
@@ -64,16 +64,16 @@ p     = data(2:rows,1:cols);             %ignore the first row
 fclose(fid);                             %close the file
 
 
-% boundary faces for f
-
-fid=fopen([file,'.face'], 'rt');         %open the file
-title = fgetl(fid);                      %read in the header
-title = str2num(title);
-cols  = title(1);
-rows  = title(2) + 4;
-data  = fscanf(fid, '%i',[rows,cols]);   %read in data
-f     = data(2:rows,1:cols);             %ignore the first row
-fclose(fid);                             %close the file
+% % boundary faces for f
+% 
+% fid=fopen([file,'.face'], 'rt');         %open the file
+% title = fgetl(fid);                      %read in the header
+% title = str2num(title);
+% cols  = title(1);
+% rows  = title(2) + 4;
+% data  = fscanf(fid, '%i',[rows,cols]);   %read in data
+% f     = data(2:rows,1:cols);             %ignore the first row
+% fclose(fid);                             %close the file
 
 
 % elements for t

@@ -57,10 +57,10 @@ save([meshname '.mat'],'nodeM','elem')
 
 %% Tet bar from distmesh
 type = 'bar';
-h = 0.2;
+h = 0.5;
 leng = 1;
 fs = filesep;
-meshname = sprintf('simulation data%cmeshes%c%s r%d n%d',fs,fs,type, h, leng);
+meshname = sprintf('mesh_data%c%s r%d n%d',fs,type, h, leng);
 
 box = [
     0.0, 0.0, 0.0;
@@ -159,11 +159,11 @@ grid on
 save([meshname '.mat'],'nodeM','elem')
 %% Tet small bar from distmesh
 type = 'small_bar';
-h = 0.1;
+h = 0.5;
 leng = 1;
 fs = filesep;
-meshname = sprintf('simulation data%cmeshes%c%s r%d n%d',fs,fs,type, h, leng);
-
+% meshname = sprintf('mesh_data%c%s r%d n%d',fs,fs,type, h, leng);
+ meshname = sprintf('mesh_data%c%s_h_%.d',fs,type, h);
 box = [
     0.0, 0.0, 0.0;
     3.0, 1.0, 1.0 ];

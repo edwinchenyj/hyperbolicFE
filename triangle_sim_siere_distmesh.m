@@ -1,4 +1,4 @@
-function triangle_sim_siere
+function triangle_sim_siere_distmesh
 %% set parameters, flags, and meshes
 close all
 
@@ -9,21 +9,21 @@ draw = true;
 % test_mode = true;
 
 dt = 1/100;
-tsteps = 100*3;
+tsteps = 1000*3;
 
 fs = filesep;
 
 mesh_shape = 'triangle';
-maxA = 0.01;
+el = 0.1;
 simulation_type = 'CG';
 
 solver = 'SIERE';
-modes = 1;
+modes = 3;
 % constraints = 1; % types of constraint
 % 1: free
 
 deformation_mode_number = 1;
-switch maxA
+switch el
     case 0.1
         deformation_scale_factor = 2;
     case 0.01
@@ -31,16 +31,16 @@ switch maxA
     case 0.001
         deformation_scale_factor = -2; % there is a sign change when maxA = 0.01, 0.001
 end
-Y = 1e6; % Young's modululs
+Y = 1e5; % Young's modululs
 P = 0.45; % Poisson ratio
 rho = 1000; % density
-a = 0.001; % rayleigh damping
-b = 0.005;
+a = 0.000; % rayleigh damping
+b = 0.000;
 material = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
 
 axis_box = [-1 1.5 -0.5 1];
 
-meshname = sprintf('mesh_data%c%s_maxA_%.d',fs,mesh_shape, maxA);
+meshname = sprintf('mesh_data%ctri_meshes%c%s el%.e',fs,fs,mesh_shape, el);
 
 if exist([meshname '.mat'], 'file') ~= 2
     disp('mesh does not exist')
@@ -52,7 +52,6 @@ end
 
 
 %%
-
 
 N = size(nodeM,1);
 
@@ -90,7 +89,7 @@ end
 
 ha = obj.init_vis;
 
-constraint_indices = repmat(nodeM(:,1) - min(nodeM(:,1)) < 0.001,1,2);
+constraint_indices = repmat(nodeM(:,1) < 0.001,1,2);
 constraint_indices = reshape((constraint_indices'),[],1);
 % deformation for the initial condition
 
@@ -99,7 +98,7 @@ deformation_mode= zeros(size(V,1),1);
 for num = deformation_mode_number
     deformation_mode = V(:,3 + num) + deformation_mode;
 end
-Dx = deformation_mode/1 * 0;
+Dx = deformation_mode;
 
 obj.SetCurrentState(Dx);
 obj.simple_vis(obj.vis_handle);
@@ -152,14 +151,13 @@ for ti = 1:tsteps
             
                u = SIERE(dt, u, obj, modes, constraint_indices,recompute);
                ritz_errors(:,ti) = obj.ritz_errors';
-%                disp(norm(obj.ritz_errors))
-%                if norm(obj.ritz_errors) > 1e-2
-%                    recompute = true;
-%                    recompute_count = recompute_count + 1;
-%                    disp(recompute_count)
-%                else
-%                    recompute = false;
-%                end
+               if norm(obj.ritz_errors) > 1e3
+                   recompute = true;
+                   recompute_count = recompute_count + 1;
+                   disp(recompute_count)
+               else
+                   recompute = false;
+               end
     end
     if(draw)
         draw_rate = round(sim_rate/vid.FrameRate);

@@ -10,10 +10,11 @@ classdef (Abstract) elasticObj < handle
         N; % #nodes
         NT; % #elements
         
+        recompute_count = 0; % recompute eig count
         node; % nodal position in world (N by 2)
         nodeM; % nodal position in material (N by 2)
         elem; % element label (NT by 3): [N1 N2 N3]
-        
+        bounding_box;
         x; % position vector in world (2N by 1)
         v; % velocity vector in world (2N by 1)
         X; % position vector in material, AKA rest pose (2N by 1)

@@ -27,7 +27,7 @@ a = 0.0; % rayleigh damping
 b = 0.00;
 material_type = 'neo-hookean'; % choice: 'linear', 'neo-hookean'
 
-axis_box = [-0.5 .5 -1.5 1];
+axis_box = [-0.5 .5 -1.5 1,0,1.5];
 
 deformation_scale = 10; % scale for the initial deformation
 

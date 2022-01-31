@@ -5,11 +5,11 @@ close all
 % draw = false;
 rerun_flag = true;
 save_state = true;
-draw = true;
+draw = false;
 % test_mode = true;
 
 dt = 1/100;
-tsteps = 100*3;
+tsteps = 100*10;
 
 fs = filesep;
 
@@ -31,8 +31,8 @@ switch simulation_type(1:2)
         isDG = false;
 end
 
-DGeta = 1e8;
-solver = 'SIIMEX';
+DGeta = 5e1;
+solver = 'SIEXPINTIMEX';
 % constraints = 1; % types of constraint
 % 1: free
 
@@ -45,7 +45,7 @@ switch maxA
     case 0.001
         deformation_scale_factor = -2; % there is a sign change when maxA = 0.01, 0.001
 end
-Y = 1e5; % Young's modululs
+Y = 1e4; % Young's modululs
 P = 0.45; % Poisson ratio
 rho = 1000; % density
 a = 0.000; % rayleigh damping
@@ -65,7 +65,7 @@ else
 end
 
 % options for fsolve in implicit solver
-options = optimoptions('fsolve','TolFun',1.e-9,'TolX',1.e-9,'Display','final');
+% options = optimoptions('fsolve','TolFun',1.e-9,'TolX',1.e-9,'Display','final');
 % options = optimoptions('fsolve','Algorithm','levenberg-marquardt');
 
 %%
@@ -127,7 +127,7 @@ ha = obj.init_vis;
 
 % deformation for the initial condition
 
-deformation_mode = V(:,3 + deformation_mode_number)/10;
+deformation_mode = V(:,4 + deformation_mode_number)/1;
 
 Dx = deformation_mode;
 
@@ -172,16 +172,22 @@ if save_state && draw
             '_dt',num2str(dt));
     end
     mkdir(simdir);
-    vidname = strcat(simdir,fs,'video.avi');
-    vid = VideoWriter(vidname);
+    
+end
+
+if draw
+    vidname = strcat(simdir,fs,'video.mp4');
+    vid = VideoWriter(vidname,'MPEG-4');
     vid.FrameRate = 50;
     open(vid);
 end
 
-
 % rate to draw the scene
 sim_rate = round(1/dt);
-draw_rate = round(sim_rate/vid.FrameRate);
+
+if draw
+    draw_rate = round(sim_rate/vid.FrameRate);
+end
 
 trajectory = zeros(size(u,1),tsteps);
 for ti = 1:tsteps
@@ -226,7 +232,6 @@ end
 % save(fname)
 
 save([simdir fs 'trajectory.mat']);
-
 
 
 end

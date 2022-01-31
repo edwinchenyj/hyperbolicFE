@@ -42,10 +42,39 @@ classdef elasticTetObj < elasticObj
             [1:3, [1:3] + 12, [1:3] + 24] + 72 + 9; ...
             [1:3, [1:3] + 12, [1:3] + 24] + 108 + 9; ...
             ]; % fast indexing for the stiffness matrix (for optimizating the speed)
+        
+%         steps to generate the following indices:
+%           generate a test_Kt_index matrix (local stiffness matrix)
+%           test_Kt = reshape(1:144,12,12);
+%           initialize the test_result_indices = zeros(144,1);
+%           fill the results 
+%           for ti = 1:4
+%               for tj = 1:4
+%                   test_result_indices(index:index+8) = reshape(test_Kt(3*(ti-1)+1:3*ti,3*(tj-1)+1:3*tj),9,1);
+%                   index = index + 9;
+%               end
+%           end
+%           
+%           get the inverse index by
+%           [~, inverse_indices] = sort(test_result_indices);
+        element_K_inverse_index = [1,2,3,37,38,39,73,74,75,109,110,111,...
+            4,5,6,40,41,42,76,77,78,112,113,114,...
+            7,8,9,43,44,45,79,80,81,115,116,117,...
+            10,11,12,46,47,48,82,83,84,118,119,120,...
+            13,14,15,49,50,51,85,86,87,121,122,123,...
+            16,17,18,52,53,54,88,89,90,124,125,126,...
+            19,20,21,55,56,57,91,92,93,127,128,129,...
+            22,23,24,58,59,60,94,95,96,130,131,132,...
+            25,26,27,61,62,63,97,98,99,133,134,135,...
+            28,29,30,64,65,66,100,101,102,136,137,138,...
+            31,32,33,67,68,69,103,104,105,139,140,141,...
+            34,35,36,70,71,72,106,107,108,142,143,144];
     end
     
     properties
         Dim = 3;
+        test_ii = [];
+        test_jj = [];
     end
     
     methods
@@ -77,10 +106,12 @@ classdef elasticTetObj < elasticObj
                 
                 obj.N = size(input_nodeM,1);
                 obj.NT = size(input_elem,1);
-                
+                obj.node = input_nodeM;
                 obj.nodeM = input_nodeM;
                 obj.elem = input_elem;
                 
+                obj.bounding_box = [min(obj.nodeM(:,1)) max(obj.nodeM(:,1)) min(obj.nodeM(:,2)) max(obj.nodeM(:,2))];
+
                 obj.X = reshape(input_nodeM',obj.Dim*obj.N,1);
                 obj.Dm = zeros(obj.Dim*obj.NT,obj.Dim);
                 obj.DmINV = zeros(obj.Dim*obj.NT,obj.Dim);
@@ -95,7 +126,7 @@ classdef elasticTetObj < elasticObj
                 obj.W = zeros(obj.NT,1);
                 obj.T = zeros(9*obj.NT, 12);
                 index = 1;
-                load('local_k_ind.mat');
+%                 load('local_k_ind.mat');
                 for i = 1:obj.NT
                     T_node = input_nodeM(input_elem(i,:),:); % element nodal position in material space  (#nodes per elements by obj.Dim)
                     obj.Dm(obj.Dim*(i-1)+1:obj.Dim*i,:) = T_node'*obj.G;
@@ -118,8 +149,8 @@ classdef elasticTetObj < elasticObj
                     end
                     temp_ii = obj.ii(index-144:index-1);
                     temp_jj = obj.jj(index-144:index-1);
-                    obj.ii(index-144:index-1) = temp_ii(local_k_ind);
-                    obj.jj(index-144:index-1) = temp_jj(local_k_ind);
+                    obj.test_ii(index-144:index-1) = temp_ii(obj.element_K_inverse_index);
+                    obj.test_jj(index-144:index-1) = temp_jj(obj.element_K_inverse_index);
                 end
                 
                 obj.calculateGravity;

@@ -10,6 +10,7 @@ rng(1) % Always the same results
 % elem = [1 2 3];
 % N = size(nodeM,1)
 % M = size(elem,1)
+normc_fcn = @(m) sqrt(m.^2 ./ sum(m.^2));
 
 
     nodeM = [                % list of xy "node" coordinates
@@ -59,7 +60,7 @@ obj.SetCurrentState(Dx);
 force = obj.ElasticForce;
 ep = 1e-8;
 rng('shuffle')
-dx = normc(rand(2*N,1));
+dx = normc_fcn(rand(2*N,1));
 % 
 % 
 % disp('ElasticForceDifferential')
@@ -77,7 +78,7 @@ K_new = obj.StiffnessMatrix;
 force_new = obj.ElasticForce;
 
 disp('max(df+Kdx)');
-disp(max((force_new-force)/ep+K*dx));
+disp(max((force_new-force)+ep*K*dx));
 % disp(max((force_new-force)/ep-df));
 % disp(max(df+K*dx))
 

@@ -41,7 +41,7 @@ else
 end
 
 % options for fsolve in implicit solver
-options = optimoptions('fsolve','TolFun',1.e-9,'TolX',1.e-9,'Display','final');
+% options = optimoptions('fsolve','TolFun',1.e-9,'TolX',1.e-9,'Display','final');
 % options = optimoptions('fsolve','Algorithm','levenberg-marquardt');
 
 

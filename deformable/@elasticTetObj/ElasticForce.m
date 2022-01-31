@@ -49,9 +49,9 @@ elseif length(obj.material_type) == 1
                 
                 tFINV = obj.FINV(3*(t-1)+1:3*t,:);
                 
-%                 J = det(tF);
-%                 P = mu *(tF - tFINV') + lambda * log(J) * tFINV';
-                P = neohookean_P_mex(mu,lambda,tF,tFINV);
+                 J = det(tF);
+                 P = mu *(tF - tFINV') + lambda * log(J) * tFINV';
+%                 P = neohookean_P_mex(mu,lambda,tF,tFINV);
                 
                 H = -obj.W(t) * P * (obj.DmINV(3*(t-1)+1:3*t,:)');
                 i = obj.elem(t, 1); j = obj.elem(t, 2); k = obj.elem(t, 3); l = obj.elem(t, 4);

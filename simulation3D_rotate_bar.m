@@ -222,20 +222,20 @@ patch_color = [0.8,0.9,0.5];
         
         [u, res, step_size]= solver(dt, u, obj,~indLogical);
         
-        if ti < 201
-            % apply the rotation
-            positions = u(1:end/2)+obj.X;
-            for left_i = indLeft'
-                temp = inv_left_transform * rotation_transform *left_transform * [positions((3*(left_i-1)+1):3*left_i); 1];
-                positions((3*(left_i-1)+1):3*left_i) = temp(1:3);
-            end
-            
-%             for right_i = indRight'
-%                 temp = inv_right_transform * inv_rotation_transform *right_transform * [positions((3*(right_i-1)+1):3*right_i); 1];
-%                 positions((3*(right_i-1)+1):3*right_i) = temp(1:3);
+%         if ti < 201
+%             % apply the rotation
+%             positions = u(1:end/2)+obj.X;
+%             for left_i = indLeft'
+%                 temp = inv_left_transform * rotation_transform *left_transform * [positions((3*(left_i-1)+1):3*left_i); 1];
+%                 positions((3*(left_i-1)+1):3*left_i) = temp(1:3);
 %             end
-            u(1:end/2) = positions-obj.X;
-        end
+%             
+% %             for right_i = indRight'
+% %                 temp = inv_right_transform * inv_rotation_transform *right_transform * [positions((3*(right_i-1)+1):3*right_i); 1];
+% %                 positions((3*(right_i-1)+1):3*right_i) = temp(1:3);
+% %             end
+%             u(1:end/2) = positions-obj.X;
+%         end
         
         if or(mod(ti, draw_rate) == 1, draw_rate == 1)
             axis equal

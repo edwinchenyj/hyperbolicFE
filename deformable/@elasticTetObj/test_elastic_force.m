@@ -23,63 +23,25 @@ obj = elasticTetObj(node, elem);
 
 vol = obj.W;
 % assert(vol > 0)
-Y = 1; % Young's modululs
+Y = 10000; % Young's modululs
 P = 0.1; % Poisson ratio
 rho = 1; % density
 
-obj.SetMaterial( Y, P, rho, 1, 1); % set the first tet to be neohookean
+obj.SetMaterial( Y, P, rho, 2, 0, 0); % set the first tet to be neohookean
 
-% obj.mu = 0;
-obj.finalize(); % finalize the material of the object
+normc_fcn = @(m) sqrt(m.^2 ./ sum(m.^2));
 
-
-x = 0.0 *rand(3*N,1); % displacement field
-% x(1) = x(1) + 0.5;
-% x(4) = x(4) + 0.5;
-% x(7) = x(7) + 0.5;
-% x(10) = x(10) + 0.5;
-v = zeros(3*N,1);
-obj.SetCurrentState(x,v);
+x = 0.1 *rand(3*N,1); % displacement field
+obj.SetCurrentState(x);
 figure
 tetramesh(elem, obj.node)
-Ds = obj.Ds;
-Dm = obj.Dm;
-DmINV = obj.DmINV;
-Ds - Dm
-Ds * inv(Dm)
-disp('F')
-disp(obj.F)
-disp('P')
-P = obj.Stress(1);
-disp(P)
-disp('force')
 force = obj.ElasticForce;
-disp(force);
 
-ep = 1e-3;
-dx = normc(rand(3*N,1));
+ep = 1e-11;
+dx = normc_fcn(rand(3*N,1));
 
-dxNode = reshape(dx,3,obj.N)'
-t = 1;
-dDs = dxNode(obj.elem(t,:),:)' * G;
-
-dF = dDs * obj.DmINV(3*(t-1)+1:3*t,:)
-%   dF =  dxNode' * G * DmINV
-
-
-disp('Stress Differential')
-disp(obj.StressDifferential(1,dF))
-disp('ElasticForceDifferential')
-disp(obj.ElasticForceDifferential(dx))
 K = obj.StiffnessMatrix;
-obj.SetCurrentState(ep*dx, v);
-% disp('new F')
-% disp(obj.F)
-% disp('new P')
-P_new = obj.Stress(1);
-% disp(P_new)
-disp('directional_derivative')
-disp((P_new - P)/ep)
+obj.SetCurrentState(ep*dx + x);
 
 force_new = obj.ElasticForce;
 disp('f directional derivative')

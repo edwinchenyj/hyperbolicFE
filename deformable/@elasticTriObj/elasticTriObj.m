@@ -68,6 +68,8 @@ classdef elasticTriObj < elasticObj
                 obj.nodeM = input_nodeM;
                 obj.elem = input_elem;
                 
+                obj.bounding_box = [min(obj.nodeM(:,1)) max(obj.nodeM(:,1)) min(obj.nodeM(:,2)) max(obj.nodeM(:,2))];
+                
                 obj.X = reshape(input_nodeM',2*obj.N,1);
                 obj.Dm = zeros(2*obj.NT,2);
                 obj.DmINV = zeros(2*obj.NT,2);
@@ -102,6 +104,7 @@ classdef elasticTriObj < elasticObj
                 end
                 
                 obj.calculateGravity;
+                obj.ritz_errors = Inf;
             end
             
         end

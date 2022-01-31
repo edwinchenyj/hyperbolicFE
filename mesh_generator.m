@@ -6,7 +6,7 @@ regenerate = false;
 fs = filesep;
 
 type_list = {'triangle' 'circle' 'rectangleCircularHole' 'rect','poly','square' 'ellipse'};
-type_list = {'circle'};
+type_list = {'triangle'};
 
 % edge length list
 el_list = [0.1 0.05 0.025 0.02 0.015];
@@ -22,7 +22,7 @@ for i_type = 1:length(type_list)
         el = el_list(i);
         fprintf('%s\n',type);
         
-        meshname = sprintf('sim_data%ctri_meshes%c%s el%.e',fs,fs,type, el);
+        meshname = sprintf('mesh_data%ctri_meshes%c%s el%.e',fs,fs,type, el);
 %         meshname = sprintf('mesh_data%c%s_inv_edge_length_%.3d',fs,type, 1/el);
         
         if or(regenerate,exist([meshname '.mat'], 'file') ~= 2)

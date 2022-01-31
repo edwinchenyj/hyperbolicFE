@@ -6,7 +6,7 @@ regenerate = false;
 fs = filesep;
 
 % type_list = {'triangle' 'circle' 'rectangleCircularHole' 'rect','poly','square' 'ellipse'};
-type_list = {'triangle','circle','rect','rect_horizontal'};
+type_list = {'triangle'};
 
 % edge length list (parameters for distmesh)
 % used to generate meshes from distmesh, which is then passed to
@@ -31,7 +31,7 @@ for i_type = 1:length(type_list)
         el = el_list(i);
         fprintf('%s\n',type);
         
-        distmesh_meshname = sprintf('sim_data%ctri_meshes%c%s el%.e',fs,fs,type, el);
+        distmesh_meshname = sprintf('mesh_data%ctri_meshes%c%s el%.e',fs,fs,type, el);
         %         meshname = sprintf('mesh_data%c%s_inv_edge_length_%.3d',fs,type, 1/el);
         
         if or(regenerate,exist([distmesh_meshname '.mat'], 'file') ~= 2)
@@ -92,7 +92,7 @@ for i_type = 1:length(type_list)
         el = el_list(i);
         maxA = maxA_list(i);
         fprintf('%s\n',type);
-        distmesh_meshname = sprintf('sim_data%ctri_meshes%c%s el%.e',fs,fs,type, el);
+        distmesh_meshname = sprintf('mesh_data%ctri_meshes%c%s el%.e',fs,fs,type, el);
         
         meshname = sprintf('mesh_data%c%s_maxA_%.d',fs,type, maxA);
         if or(regenerate,exist([meshname '.mat'], 'file') ~= 2)

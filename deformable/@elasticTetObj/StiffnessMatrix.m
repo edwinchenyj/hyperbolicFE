@@ -3,6 +3,7 @@ function K = StiffnessMatrix(obj)
 % this can be calculated using current deformation state as the only input
 index = 1;
 sA = zeros(size(obj.ii));
+test_sA =zeros(size(obj.test_ii));
 if length(obj.material_type) == 1
     switch obj.material_type % TODO: change the material type initialization
         case 1
@@ -16,37 +17,52 @@ if length(obj.material_type) == 1
                 
                 % the fourth order tensor
                 tFINV = obj.FINV(3*(t-1)+1:3*t,:);
-%                 Kk = obj.Kmm* kron(tFINV',tFINV);
+                Kk = obj.Kmm* kron(tFINV',tFINV);
                 % for Neo-hookean
 %                 C = mu * obj.Im + mu * Kk...
 %                     - lambda * (log(det(tF))*Kk)...
 %                     + lambda*(obj.Kmm*(tFINV(:)*reshape(transpose(tFINV),1,9)));
-                C = neohookean_c_mex(mu,lambda,tF,tFINV,obj.Im,obj.Kmm);
+                C = mu * obj.Im + mu * obj.Kmm* kron(tFINV',tFINV)...
+                - lambda * (log(det(tF))*obj.Kmm*kron(tFINV',tFINV))...
+                + lambda*(obj.Kmm*(tFINV(:)*reshape(transpose(tFINV),1,9)));
+%                 C = neohookean_c_mex(mu,lambda,tF,tFINV,obj.Im,obj.Kmm);
                 % element stiffness matrix
                 
                 Kt = W * tT'*C*tT;
                 Kt = 1/2 * (Kt + Kt');
                 %         if det(Kt) < 0
-                [U,D] = eig(Kt);
-                for i_s = 1:size(D,1)
-                    if D(i_s,i_s) < 1e-6
-                        %                     disp(D(i_s,i_s))
-                        %                     disp('element eigenvalue < 0')
-                        D(i_s,i_s) = 1e-3;
-                        
-                    end
-                end
-                Kt = U * D *(U');
+%                 [U,D] = eig(Kt);
+%                 for i_s = 1:size(D,1)
+%                     if D(i_s,i_s) < 1e-6
+%                         %                     disp(D(i_s,i_s))
+%                         %                     disp('element eigenvalue < 0')
+%                         D(i_s,i_s) = 1e-3;
+%                         
+%                     end
+%                 end
+%                 Kt = U * D *(U');
                 %             eig(Kt)
                 %             assert(~any(eig(Kt) < 0));
                 %         end
                 sA(index:index+143) = Kt(:);
                 index = index + 144;
-
+%                 test_Kt = reshape(1:144,12,12);
+%                 test_indices = zeros(144,1);
+%                  for ti = 1:4
+%                     for tj = 1:4
+% %                         sA(index:index+8) = Kt(obj.IndK(4*(ti-1) + tj,:));
+% %                         test_indices(index:index+8) = test_Kt(obj.IndK(4*(ti-1) + tj,:));
+% %                         test_indices(index:index+8) = reshape(test_Kt(3*(ti-1)+1:3*ti,3*(tj-1)+1:3*tj),9,1);
+%                         % same as:
+%                         sA(index:index+8) = reshape(Kt(3*(ti-1)+1:3*ti,3*(tj-1)+1:3*tj),9,1);
+%                         index = index + 9;
+%                     end
+%                 end
                 
             end
             % global stiffness matrix
-            K = sparse(obj.ii, obj.jj, sA, obj.Dim*obj.N, obj.Dim*obj.N);
+            K = sparse(obj.test_ii, obj.test_jj, sA, obj.Dim*obj.N, obj.Dim*obj.N);
+%             test_K = sparse(obj.test_ii, obj.test_jj, test_sA, obj.Dim*obj.N, obj.Dim*obj.N);
         case 2
             if isempty(obj.K0)
                 for t = 1:obj.NT

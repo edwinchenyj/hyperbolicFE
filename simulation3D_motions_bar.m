@@ -149,47 +149,47 @@ N = size(nodeM,1);
 % vibration = load([simdir fs 'deformation.mat'], 'Dx'); % storing eigen decomp
 % vibration_def = reshape(vibration.Dx,3,[]);
 
-%% load Dx from dropping bar
-traj_name = ['sim_data\simulation3D_dropping_bar_',material_type,'_small_bar\ERE_CG_constraint_n_h',num2str(h),'_Y100000_P0.45_rho1000_a0.01_b0.01_dt0.01_def-scln\trajectory.mat'];
-
-dropping_traj = load(traj_name);
-close(gcf)
-dropping_dx = reshape(dropping_traj.trajectory(1:end/2,200),3,[]);
-dropping_dx = dropping_dx([3 2 1],:);
-dropping_dx = dropping_dx(:);
-%% load Dx from releasing bar
-dirname = sprintf('sim_data%c%s_%s_%s', fs, 'simulation3D_releasing_bar',material_type, mesh_shape);
-Y_releasing = 1e3;
-P_releasing = 0.45;
-rho_releasing = 1000;
-a_releasing = 0.1;
-b_releasing = 0.01;
-dt_releasing = 1/100;
-simdir = strcat(dirname,fs,'ERE','_',simulation_type,...
-    '_constraint_',constraint,...
-    '_h',num2str(h),...
-    '_Y',num2str(Y_releasing),...
-    '_P',num2str(P_releasing),...
-    '_rho',num2str(rho_releasing),...
-    '_a',num2str(a_releasing),...
-    '_b',num2str(b_releasing),...
-    '_dt',num2str(dt_releasing),...
-    '_def-scl',num2str(deformation_scale));
-
-
-
-twisting = load([simdir fs 'deformation.mat'], 'Dx','ind','R'); % storing eigen decomp
-
-% turn twisting def 90 degree
-twisting_dx = reshape(twisting.Dx,3,[]);
-twisting_dx = twisting_dx([3,2,1],:);
-twisting.Dx = twisting_dx(:);
-
-% put the vibration_def to the sorted order 
-% vibration_def = vibration_def(:,twisting.ind);
-% vibration.Dx = vibration_def(:);
-
-elem = twisting.R(elem(:,:));
+% %% load Dx from dropping bar
+% traj_name = ['sim_data\simulation3D_dropping_bar_',material_type,'_small_bar\ERE_CG_constraint_n_h',num2str(h),'_Y100000_P0.45_rho1000_a0.01_b0.01_dt0.01_def-scln\trajectory.mat'];
+% 
+% dropping_traj = load(traj_name);
+% close(gcf)
+% dropping_dx = reshape(dropping_traj.trajectory(1:end/2,200),3,[]);
+% dropping_dx = dropping_dx([3 2 1],:);
+% dropping_dx = dropping_dx(:);
+% %% load Dx from releasing bar
+% dirname = sprintf('sim_data%c%s_%s_%s', fs, 'simulation3D_releasing_bar',material_type, mesh_shape);
+% Y_releasing = 1e3;
+% P_releasing = 0.45;
+% rho_releasing = 1000;
+% a_releasing = 0.1;
+% b_releasing = 0.01;
+% dt_releasing = 1/100;
+% simdir = strcat(dirname,fs,'ERE','_',simulation_type,...
+%     '_constraint_',constraint,...
+%     '_h',num2str(h),...
+%     '_Y',num2str(Y_releasing),...
+%     '_P',num2str(P_releasing),...
+%     '_rho',num2str(rho_releasing),...
+%     '_a',num2str(a_releasing),...
+%     '_b',num2str(b_releasing),...
+%     '_dt',num2str(dt_releasing),...
+%     '_def-scl',num2str(deformation_scale));
+% 
+% 
+% 
+% twisting = load([simdir fs 'deformation.mat'], 'Dx','ind','R'); % storing eigen decomp
+% 
+% % turn twisting def 90 degree
+% twisting_dx = reshape(twisting.Dx,3,[]);
+% twisting_dx = twisting_dx([3,2,1],:);
+% twisting.Dx = twisting_dx(:);
+% 
+% % put the vibration_def to the sorted order 
+% % vibration_def = vibration_def(:,twisting.ind);
+% % vibration.Dx = vibration_def(:);
+% 
+% elem = twisting.R(elem(:,:));
 
 dirname = sprintf('sim_data%c%s_%s_%s', fs, mfilename,material_type, mesh_shape);
 
@@ -210,7 +210,7 @@ mkdir(simdir);
 %% set fixed points and
 % fix nFixed number of highest point
 
-nodeM = nodeM(twisting.ind,:);
+% nodeM = nodeM(twisting.ind,:);
 % elem = twisting.R(elem(:,:));
 
 bottom_points = find(abs(nodeM(:,3)-0) < 0.01);
@@ -265,7 +265,7 @@ end
 %
 % Dx = 0*rand(obj.Dim*N,1); % displacement field. set zero for rest state
 % Dx = loaded.obj.x - loaded.obj.X;
-Dx = twisting.Dx + dropping_dx * 2;
+% Dx = twisting.Dx + dropping_dx * 2;
 % Dx = twisting.Dx;
 % Dx = vibration.Dx;
 % temp_Dx = Dx(~indLogical);
