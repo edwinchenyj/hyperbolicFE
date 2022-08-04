@@ -63,6 +63,10 @@ classdef springs_particles < handle
             obj.v = v;
         end
         
+        function df = force_derivative(obj)
+            df = -obj.stiffness_matrix;
+        end
+
         function K = stiffness_matrix(obj)
             % the stiffness matrix
             n = obj.n;
@@ -92,7 +96,7 @@ classdef springs_particles < handle
             
             end
             
-            K = obj.k_matrix;
+            K = -obj.k_matrix;
             
         end
         
